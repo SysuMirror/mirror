@@ -290,7 +290,8 @@ def password_verify(email, password):
         return error.code, payload
 
 
-SSO_COOKIE_NAME = "sse_sso"
+SSO_COOKIE_NAME = "unisso_sid"
+SSO_COOKIE_LEGACY_NAME = "sse_sso"  # 旧名：兼容期双读双清，unisso 切默认名后可删
 SSO_COOKIE_DOMAIN = ".ssemarket.cn"
 
 
@@ -675,11 +676,12 @@ class MirrorHandler(BaseHTTPRequestHandler):
         }
 
     def sso_try(self):
-        """静默 SSO：读 sse_sso Cookie → unisso session/verify → 签本地会话。"""
+        """静默 SSO：读共享 SSO Cookie（unisso_sid 优先，兼容期回落 sse_sso）→ unisso session/verify → 签本地会话。"""
         if not allow_rate("sso:" + client_ip(self), limit=10, seconds=60):
             self.reply({"error": "too many requests"}, 429)
             return
-        sso_session = request_cookies(self).get(SSO_COOKIE_NAME, "")
+        sso_cookies = request_cookies(self)
+        sso_session = sso_cookies.get(SSO_COOKIE_NAME) or sso_cookies.get(SSO_COOKIE_LEGACY_NAME) or ""
         if not sso_session:
             self.reply({"error": "no_sso"}, 401)
             return
@@ -698,9 +700,9 @@ class MirrorHandler(BaseHTTPRequestHandler):
         self.reply(self.finish_login(user, email))
 
     def logout(self, value):
-        """登出：撤销 UniSSO 会话 + 清父域 Cookie + 删本地 sid。"""
+        """登出：撤销 UniSSO 会话 + 清父域 Cookie（新旧名双清）+ 删本地 sid。"""
         cookies = request_cookies(self)
-        sso_session = cookies.get(SSO_COOKIE_NAME, "")
+        sso_session = cookies.get(SSO_COOKIE_NAME) or cookies.get(SSO_COOKIE_LEGACY_NAME) or ""
         if sso_session:
             try:
                 unisso_session_call("/api/oauth/session/revoke", sso_session, timeout=5)
@@ -712,6 +714,7 @@ class MirrorHandler(BaseHTTPRequestHandler):
                 DB.execute("DELETE FROM sessions WHERE sid = ?", (sid,))
         self.reply({"ok": True}, extra_headers=[
             ("Set-Cookie", sso_cookie_header("", 0)),
+            ("Set-Cookie", sso_cookie_header("", 0, name=SSO_COOKIE_LEGACY_NAME)),
         ])
 
     # ---------- 订单：甲方 ----------
