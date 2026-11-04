@@ -1,0 +1,32 @@
+# dependencies
+web/node_modules/
+
+# build artifacts (keep zip optional; regenerate via scripts)
+web/dist/
+*.zip
+
+# env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# editor / OS
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# backup trees
+web.bak-campus-deal/
+
+# 运行时数据与备份
+mirror.db
+mirror.db-*
+*.bak*
+__pycache__/
+*.pyc
+._*
+web/dist.bak-*/
