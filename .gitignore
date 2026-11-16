@@ -26,6 +26,10 @@ web.bak-campus-deal/
 # 运行时数据与备份
 mirror.db
 mirror.db-*
+# dev Pod 演示状态与演示库（独立持久化目录，绝不入库）
+dev/_state/
+dev/dev_*.db
+dev/mock_state.json
 *.bak*
 __pycache__/
 *.pyc

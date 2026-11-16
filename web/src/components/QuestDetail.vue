@@ -14,6 +14,7 @@ import {
 } from '../api/quest'
 import { recordPostView } from '../api/stats'
 import { useUserStore } from '../stores/user'
+import { isSameAccount, withCurrentAuthor } from '../utils/author'
 import {
   DEFAULT_AVATAR,
   STATUS_LABEL,
@@ -37,8 +38,10 @@ const actionMsg = ref('')
 const statusDraft = ref('open')
 const submitNote = ref('')
 
-const isOwner = computed(() => post.value && user.me?.userID === post.value.authorID)
+const isOwner = computed(() => isSameAccount(post.value, user.me))
 const isWorker = computed(() => post.value?.order && user.me?.userID === post.value.order.workerID)
+// 发布者资料按 authorID 关联当前账号：改名后不会出现「补充说明里是新名字、发布者栏还是旧名字」。
+const publisher = computed(() => withCurrentAuthor(post.value, user.me) || {})
 const isBounty = computed(() => post.value?.postKind === 'bounty')
 const priceText = computed(() => isBounty.value ? formatPrice(post.value) : '求助')
 const postedAt = computed(() => {
@@ -267,15 +270,15 @@ async function onConfirmComplete() {
           <div><dt>当前状态</dt><dd>{{ STATUS_LABEL[post.questStatus] || '待接单' }}</dd></div>
           <div><dt>截止时间</dt><dd>{{ formatDeadline(post.questDeadline) || '未设置' }}</dd></div>
           <div><dt>发布时间</dt><dd>{{ postedAt }}</dd></div>
-          <div><dt>发布者</dt><dd>{{ post.authorName || '用户' }}</dd></div>
+          <div><dt>发布者</dt><dd>{{ publisher.authorName || '用户' }}</dd></div>
         </dl>
       </section>
 
       <div class="detail-publisher">
-        <img class="detail-avatar" :src="avatarUrl(post.authorAvatar)" alt="" @error="onAvatarError">
+        <img class="detail-avatar" :src="avatarUrl(publisher.authorAvatar)" alt="" @error="onAvatarError">
         <div class="detail-publisher__info">
-          <strong>{{ post.authorName || '用户' }}</strong>
-          <span>{{ levelLabel(post.authorScore) }} · {{ relativeTime(post.postTime) }}发布</span>
+          <strong>{{ publisher.authorName || '用户' }}</strong>
+          <span>{{ levelLabel(publisher.authorScore) }} · {{ relativeTime(post.postTime) }}发布</span>
         </div>
         <button v-if="!isOwner" type="button" class="btn ghost sm" @click="contactAuthor">发私信</button>
       </div>
@@ -324,7 +327,7 @@ async function onConfirmComplete() {
       <AuthorNotes
         :post-id="Number(post.postID || props.id)"
         :is-owner="!!isOwner"
-        :author-name="post.authorName || '发布者'"
+        :author-name="publisher.authorName || '发布者'"
       />
     </template>
   </div>

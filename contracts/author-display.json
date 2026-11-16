@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "description": "发布者展示信息的唯一真源是当前账号资料。帖子 / 批注里的 authorName、authorAvatar、authorScore 只是发布当时的快照，账号改名后会变陈旧；展示前按 authorID 重新解析，不回写任何历史数据。",
+  "identityField": "authorID",
+  "accountIdField": "userID",
+  "match": "loose-string",
+  "fields": {
+    "authorName": "name",
+    "authorAvatar": "avatarURL",
+    "authorScore": "score"
+  },
+  "messages": {
+    "fallback": "用户"
+  }
+}

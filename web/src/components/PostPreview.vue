@@ -16,6 +16,7 @@ const cardPost = computed(() => ({
   quotePrice: props.draft.quotePrice,
   quotePriceMin: props.draft.quotePriceMin,
   quotePriceMax: props.draft.quotePriceMax,
+  authorID: props.draft.authorID,
   authorName: props.draft.authorName || '我',
   authorAvatar: props.draft.authorAvatar,
   authorScore: props.draft.authorScore || 0,

@@ -708,6 +708,9 @@ class MirrorHandler(BaseHTTPRequestHandler):
     # ---------- 账号 ----------
 
     def login(self, value):
+        if not UNISSO_CLIENT_ID or not UNISSO_CLIENT_SECRET:
+            self.reply({"error": "sso client misconfigured"}, 503)
+            return
         fields = require_fields(value, ("email", "password"), {"email": 128, "password": 128})
         if not fields:
             self.reply({"error": "email and password are required"}, 400)
@@ -775,6 +778,9 @@ class MirrorHandler(BaseHTTPRequestHandler):
 
     def sso_try(self):
         """静默 SSO：读共享 SSO Cookie（unisso_sid 优先，兼容期回落 sse_sso）→ unisso session/verify → 签本地会话。"""
+        if not UNISSO_CLIENT_ID or not UNISSO_CLIENT_SECRET:
+            self.reply({"error": "sso client misconfigured"}, 503)
+            return
         if not allow_rate("sso:" + client_ip(self), limit=10, seconds=60):
             self.reply({"error": "too many requests"}, 429)
             return
@@ -1003,8 +1009,14 @@ class MirrorHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    # dev Pod 只起服务做联调，不接 UniSSO：显式 MIRROR_DEV_MODE=1 才允许缺凭据启动。
+    # 仅放宽「启动校验」，登录 / SSO 仍然拒绝请求，绝不跳过身份校验；默认路径零变化。
+    DEV_MODE = os.environ.get("MIRROR_DEV_MODE", "") == "1"
     if not UNISSO_CLIENT_ID or not UNISSO_CLIENT_SECRET:
-        raise SystemExit("UNISSO_CLIENT_ID and UNISSO_CLIENT_SECRET are required")
+        if not DEV_MODE:
+            raise SystemExit("UNISSO_CLIENT_ID and UNISSO_CLIENT_SECRET are required")
+        print("WARNING [mirror-dev] UniSSO 凭据未配置：服务可启动，但登录/SSO 接口将返回 503；"
+              "此模式严禁用于生产", file=sys.stderr, flush=True)
     if not MARKET_TRUST_SECRET:
         print("warning: MARKET_TRUST_SECRET is not set; admin market tokens unavailable",
               file=sys.stderr, flush=True)

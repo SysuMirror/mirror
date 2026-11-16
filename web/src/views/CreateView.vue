@@ -150,6 +150,7 @@ const previewDraft = computed(() => ({
     ? new Date(deadline.value).toISOString()
     : null,
   attachments: attachments.value,
+  authorID: user.me?.userID,
   authorName: user.me?.name,
   authorAvatar: user.me?.avatarURL,
   authorScore: user.me?.score,

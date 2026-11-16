@@ -82,6 +82,20 @@ ok('计数契约字段合法',
   !!statsRules && !!statsRules.dedupe?.view && !!statsRules.dedupe?.chat
   && !!statsRules.messages?.login && !!statsRules.messages?.postID)
 
+// 发布者展示：authorID 才是身份，authorName 等只是发布当时的快照，改名后展示时重新解析。
+const authorContract = join(REPO, 'contracts', 'author-display.json')
+ok('发布者展示契约文件存在', existsSync(authorContract))
+if (!existsSync(authorContract)) {
+  console.error('缺少 contracts/author-display.json，无法继续')
+  process.exit(1)
+}
+const authorRules = JSON.parse(read(authorContract))
+ok('发布者展示契约字段合法',
+  !!authorRules && authorRules.identityField === 'authorID'
+  && authorRules.accountIdField === 'userID' && authorRules.match === 'loose-string'
+  && authorRules.fields?.authorName === 'name'
+  && authorRules.messages?.fallback)
+
 const pyModule = join(REPO, 'contracts', 'money_rules.py')
 const units = [
   { name: 'dev 网关', dir: DEV_ENV },
@@ -102,7 +116,7 @@ for (const unit of units) {
   if (existsSync(pyCopy)) {
     ok(`${unit.name} 校验实现一致`, read(pyCopy).trim() === read(pyModule).trim())
   }
-  for (const file of ['note-rules.json', 'note_rules.py', 'notes.py', 'post-stats.json', 'post_stats.py']) {
+  for (const file of ['note-rules.json', 'note_rules.py', 'notes.py', 'post-stats.json', 'post_stats.py', 'author-display.json', 'author_display.py']) {
     const copy = join(unit.dir, file)
     const source = join(REPO, 'contracts', file)
     ok(`${unit.name} ${file} 副本齐全`, existsSync(copy))
@@ -158,6 +172,36 @@ ok('详情页展示浏览与沟通数',
 const messagesVue = read(join(REPO, 'web', 'src', 'views', 'MessagesView.vue'))
 ok('私信页从需求发起时上报沟通',
   messagesVue.includes('recordPostChat(postID.value, peerID.value)'))
+const authorJs = read(join(REPO, 'web', 'src', 'utils', 'author.js'))
+ok('前端发布者展示模块引用同一契约', authorJs.includes('contracts/author-display.json'))
+// 生产后端只核实 authorID 归属、不返回帖子内容，作者名由前端按契约解析。
+ok('生产后端不自行渲染作者名快照', !serverPy.includes('authorName'))
+for (const [file, needle] of [
+  ['QuestCard.vue', 'withCurrentAuthor('],
+  ['QuestDetail.vue', 'withCurrentAuthor('],
+  ['AuthorNotes.vue', 'withCurrentAuthor('],
+  ['PostPreview.vue', 'authorID:'],
+]) {
+  const text = read(join(REPO, 'web', 'src', 'components', file))
+  ok(`${file} 复用统一发布者展示解析`, text.includes(needle))
+}
+for (const file of [join(DEV_ENV, 'dev_gateway.py'), join(DEV_ENV, 'Mirror本地试玩', 'server.py')]) {
+  if (!existsSync(file)) {
+    console.log(`  [skip] ${short(file)} 复用发布者展示（当前环境没有该文件）`)
+    continue
+  }
+  const text = read(file)
+  ok(`${short(file)} 复用统一发布者展示`,
+    text.includes('from author_display import with_current_author')
+    && text.includes('with_current_author(dict(post), state["me"])'))
+}
+// 历史数据绝不批量回写：改名只影响展示，不抹掉发布当时的原始记录。
+for (const file of [join(DEV_ENV, 'dev_gateway.py'), join(DEV_ENV, 'Mirror本地试玩', 'server.py')]) {
+  if (existsSync(file))
+    ok(`${short(file)} 改名不回写历史帖子`,
+      !/for\s+p\s+in\s+st\["posts"\][\s\S]{0,160}authorName\]\s*=/.test(read(file)))
+}
+
 const mainCss = read(join(REPO, 'web', 'src', 'styles', 'main.css'))
 ok('会话列表红点与时间在桌面可见',
   !/\.peer-item__side\s*\{\s*display:\s*none/.test(mainCss)
@@ -477,6 +521,136 @@ if (statsPy) {
   }
 }
 
+// ---------------------------------------------------------------- 5.6 发布者展示：改名跟随，前后端同一组输入
+const authorCases = [
+  {
+    name: '本人历史帖跟随改名',
+    record: { postID: 104, authorID: 1, authorName: '开发体验账号', authorAvatar: '', authorScore: 320 },
+    me: { userID: 1, name: '帅', avatarURL: 'avatar.png', score: 420 },
+    expect: { authorName: '帅', authorAvatar: 'avatar.png', authorScore: 420 },
+  },
+  {
+    name: '字符串 ID 与数字 ID 也算同一人',
+    record: { authorID: '1', authorName: '旧名字' },
+    me: { userID: 1, name: '帅' },
+    expect: { authorName: '帅' },
+  },
+  {
+    name: '别人的帖子保持原样',
+    record: { authorID: 101, authorName: '林同学', authorScore: 460 },
+    me: { userID: 1, name: '帅', score: 420 },
+    expect: { authorName: '林同学', authorScore: 460 },
+  },
+  {
+    name: '未登录（me 为空）保持快照',
+    record: { authorID: 1, authorName: '旧名字' },
+    me: null,
+    expect: { authorName: '旧名字' },
+  },
+  {
+    name: '账号缺 userID 不误判',
+    record: { authorID: 1, authorName: '旧名字' },
+    me: { name: '帅' },
+    expect: { authorName: '旧名字' },
+  },
+  {
+    name: '帖子缺 authorID 不误判',
+    record: { authorName: '旧名字' },
+    me: { userID: 1, name: '帅' },
+    expect: { authorName: '旧名字' },
+  },
+  {
+    name: '账号资料缺字段时保留旧快照',
+    record: { authorID: 1, authorName: '旧名字', authorScore: 320 },
+    me: { userID: 1, name: '帅' },
+    expect: { authorName: '帅', authorScore: 320 },
+  },
+  {
+    name: '历史批注同样跟随改名',
+    record: { id: 7, postID: 104, authorID: '1', authorName: '旧名字', content: '问问' },
+    me: { userID: 1, name: '帅' },
+    expect: { authorName: '帅', content: '问问' },
+  },
+  {
+    name: '非对象入参原样返回',
+    record: null,
+    me: { userID: 1, name: '帅' },
+    expect: null,
+  },
+]
+
+const canon = (v) => {
+  if (Array.isArray(v)) return `[${v.map(canon).join(',')}]`
+  if (v && typeof v === 'object')
+    return `{${Object.keys(v).sort().map(k => `${JSON.stringify(k)}:${canon(v[k])}`).join(',')}}`
+  return JSON.stringify(v) ?? 'undefined'
+}
+
+const authorVmCode = authorJs.replace(/^import rules from .*$/m, '').replace(/^export /gm, '')
+const authorCtx = vm.createContext({ rules: authorRules })
+vm.runInContext(`${authorVmCode}\n;globalThis.__author = { withCurrentAuthor, isSameAccount };`, authorCtx)
+const jsAuthorResults = authorCases.map(c => {
+  const before = canon(c.record)
+  const result = authorCtx.__author.withCurrentAuthor(c.record, c.me)
+  return { result, untouched: canon(c.record) === before }
+})
+
+const authorPyScript = `
+import json, sys
+sys.path.insert(0, sys.argv[1])
+from author_display import with_current_author
+out = []
+for c in json.loads(sys.argv[2]):
+    record, me = c["record"], c["me"]
+    before = json.dumps(record, sort_keys=True, ensure_ascii=False)
+    result = with_current_author(record, me)
+    out.append({"result": result,
+                "untouched": json.dumps(record, sort_keys=True, ensure_ascii=False) == before})
+print(json.dumps(out, ensure_ascii=False))
+`
+let authorPy = null
+let authorPyErr = ''
+for (const cmd of ['python', 'python3', 'py']) {
+  const r = spawnSync(cmd, ['-c', authorPyScript, join(REPO, 'contracts'), JSON.stringify(authorCases)], { encoding: 'utf8' })
+  if (r.status === 0 && !r.error) {
+    authorPy = r
+    break
+  }
+  authorPyErr = (r.stderr || r.stdout || r.error?.message || '').trim().split('\n').slice(-4).join(' | ')
+}
+ok('发布者展示服务端模块可执行', !!authorPy, authorPy ? '' : authorPyErr || '未找到可用的 python')
+if (authorPy) {
+  let py = null
+  try {
+    py = JSON.parse(authorPy.stdout.trim())
+  }
+  catch {
+    ok('发布者展示用例输出可解析', false, authorPy.stderr || authorPy.stdout)
+  }
+  if (py) {
+    const diff = authorCases
+      .map((c, i) => ({ name: c.name, js: jsAuthorResults[i].result, python: py[i].result }))
+      .filter(r => canon(r.js) !== canon(r.python))
+      .map(r => r.name)
+    ok(`发布者展示（${authorCases.length} 条）前后端完全一致`, diff.length === 0, diff.join(', '))
+    const wrong = authorCases
+      .map((c, i) => ({ name: c.name, result: jsAuthorResults[i].result, expect: c.expect }))
+      .filter(({ result, expect }) => {
+        if (expect === null) return result !== null
+        return !result || Object.entries(expect).some(([k, v]) => result[k] !== v)
+      })
+      .map(r => r.name)
+    ok('改名跟随且不误伤他人快照', wrong.length === 0, wrong.join(', '))
+    ok('解析不修改原始记录',
+      jsAuthorResults.every(r => r.untouched) && py.every(r => r.untouched))
+    ok('身份比较宽松匹配且拒绝空 ID',
+      authorCtx.__author.isSameAccount({ authorID: '1' }, { userID: 1 }) === true
+      && authorCtx.__author.isSameAccount({ authorID: 2 }, { userID: 1 }) === false
+      && authorCtx.__author.isSameAccount({ authorID: null }, { userID: 1 }) === false
+      && authorCtx.__author.isSameAccount({ authorID: 1 }, null) === false)
+  }
+}
+
 // ---------------------------------------------------------------- 6. 首屏封面工程化
 const coverVue = read(join(REPO, 'web', 'src', 'views', 'CoverView.vue'))
 const heroJs = read(join(REPO, 'web', 'src', 'utils', 'mirror-hero.js'))
@@ -498,6 +672,44 @@ ok('封面样式不写全局选择器', !/(^|\n)\s*(html|body|\*)\s*\{/.test(her
 ok('封面路由公开、大厅仍是 home',
   routerJs.includes("name: 'cover'") && routerJs.includes('meta: { guest: true }')
   && routerJs.includes("path: '/hall', name: 'home'"))
+
+// ---------------------------------------------------------------- 7. 部署与 dev 隔离
+const deploySh = read(join(REPO, 'deploy.sh'))
+const devGateway = read(join(REPO, 'dev', 'dev_gateway.py'))
+const unreadJs = read(join(REPO, 'web', 'src', 'stores', 'unread.js'))
+const webHtml = read(join(REPO, 'web', 'index.html'))
+
+ok('部署入口按 MIRROR_DEV_MODE 分发',
+  deploySh.includes('MIRROR_DEV_MODE') && deploySh.includes('exec python3 "$ROOT/dev/dev_gateway.py"'))
+ok('dev 入口自带构建并用 env 文件固定同源 API',
+  deploySh.includes('.env.dev.example') && deploySh.includes('--mode dev')
+  && deploySh.includes('npm run build'))
+ok('dev 入口挡住 MSYS 路径转换污染',
+  deploySh.includes('PortableGit') && deploySh.includes('grep -Rqs'))
+ok('生产静态路径仍完整保留',
+  deploySh.includes('QUEST_STATIC_DIR') && deploySh.includes('missing web/dist'))
+ok('dev 网关复用 contracts 单一真源',
+  devGateway.includes('from contracts.money_rules import')
+  && devGateway.includes('from contracts.notes import')
+  && devGateway.includes('from contracts.post_stats import')
+  && devGateway.includes('from contracts.author_display import'))
+ok('dev 目录不保留任何契约副本',
+  !existsSync(join(REPO, 'dev', 'money_rules.py'))
+  && !existsSync(join(REPO, 'dev', 'money-rules.json'))
+  && !existsSync(join(REPO, 'dev', 'notes.py')))
+ok('dev 网关必须显式开关才允许启动',
+  devGateway.includes('DEV_MODE') && devGateway.includes('if not DEV_MODE'))
+ok('dev 网关未命中的接口回 JSON 错误，不回退成 index.html',
+  devGateway.includes('upstream not configured in dev mode'))
+ok('真后端默认仍强制 UniSSO 凭据',
+  serverPy.includes('UNISSO_CLIENT_ID and UNISSO_CLIENT_SECRET are required')
+  && serverPy.includes('if not DEV_MODE:'))
+ok('dev 只放宽启动校验，登录/SSO 仍拒绝请求',
+  (serverPy.match(/sso client misconfigured/g) || []).length >= 3)
+ok('未读轮询有失败退避，后端挂掉不刷屏',
+  unreadJs.includes('MAX_BACKOFF_MS') && unreadJs.includes('backoffUntil'))
+ok('页面声明内联 favicon，消除 404',
+  webHtml.includes('rel="icon"') && webHtml.includes('data:image/svg+xml'))
 
 // ---------------------------------------------------------------- 结果
 console.log(`\n生产自检：${checks.length - failures.length}/${checks.length} 项通过`)

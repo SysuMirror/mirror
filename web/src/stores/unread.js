@@ -13,9 +13,12 @@ export const unreadTotal = ref(0)
 
 const STORAGE_KEY = 'mirror_read_baseline'
 const POLL_MS = 30000
+const MAX_BACKOFF_MS = 5 * 60 * 1000
 
 let peersCache = []
 let timer = null
+let failures = 0
+let backoffUntil = 0
 let pollRefs = 0
 let inflight = null
 let scope = 'anon'
@@ -68,6 +71,9 @@ export function setUnreadScope(userID) {
     return
   scope = next
   baseline = loadBaseline()
+  // 换账号后立刻恢复探测，别让上一个账号的退避挡住新账号
+  failures = 0
+  backoffUntil = 0
 }
 
 function safeCount(v) {
@@ -94,14 +100,25 @@ export function refreshUnread() {
   if (!getToken()) {
     peersCache = []
     unreadTotal.value = 0
+    failures = 0
+    backoffUntil = 0
     return Promise.resolve(0)
   }
+  // 后端不可用时指数退避：别每 30s 再打一次必失败的请求，把后台日志刷爆。
+  if (Date.now() < backoffUntil)
+    return Promise.resolve(unreadTotal.value)
   inflight = fetchChatPeers()
     .then((peers) => {
       peersCache = Array.isArray(peers) ? peers : []
       recompute(peersCache)
+      failures = 0
+      backoffUntil = 0
     })
-    .catch(() => { /* 保留上一次结果 */ })
+    .catch(() => {
+      /* 保留上一次结果；连续失败时拉长下一次探测间隔 */
+      failures = Math.min(failures + 1, 5)
+      backoffUntil = Date.now() + Math.min(POLL_MS * (2 ** failures), MAX_BACKOFF_MS)
+    })
     .finally(() => { inflight = null })
     .then(() => unreadTotal.value)
   return inflight

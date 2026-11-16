@@ -1,6 +1,8 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { addNote, fetchNotes } from '../api/notes'
+import { useUserStore } from '../stores/user'
+import { withCurrentAuthor } from '../utils/author'
 import { relativeTime } from '../utils/display'
 import {
   NOTE_MAX_LENGTH,
@@ -16,7 +18,11 @@ const props = defineProps({
   authorName: { type: String, default: '发布者' },
 })
 
+const user = useUserStore()
+// 历史补充说明里存的是写入时的名字快照；账号改名后按 authorID 关联当前资料，
+// 避免同一条帖子里「发布者」是新名字、「补充 1」还是旧名字。
 const notes = ref([])
+const resolvedNotes = computed(() => notes.value.map(n => withCurrentAuthor(n, user.me)))
 const loading = ref(true)
 const error = ref('')
 const draft = ref('')
@@ -113,7 +119,7 @@ async function submit() {
 
     <template v-else>
       <ol v-if="notes.length" class="note-timeline">
-        <li v-for="(item, i) in notes" :key="item.id" class="note-timeline__item">
+        <li v-for="(item, i) in resolvedNotes" :key="item.id" class="note-timeline__item">
           <span class="note-timeline__dot">{{ i + 1 }}</span>
           <div class="note-timeline__body">
             <div class="note-timeline__meta">

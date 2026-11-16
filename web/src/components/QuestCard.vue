@@ -1,10 +1,17 @@
 <script setup>
 import { computed } from 'vue'
+import { useUserStore } from '../stores/user'
+import { withCurrentAuthor } from '../utils/author'
 import { DEFAULT_AVATAR, STATUS_LABEL, avatarUrl, formatDeadline, formatPrice, relativeTime } from '../utils/display'
 
 const props = defineProps({
   post: { type: Object, required: true },
 })
+
+const user = useUserStore()
+// 作者名是发帖时的快照，改名后会旧；展示时按 authorID 关联当前账号资料。
+// me 是响应式的，改完名字不用重新拉列表也能立刻跟上。
+const author = computed(() => withCurrentAuthor(props.post, user.me))
 
 // 列表只放标题 + 标签，正文一律点进详情才看。
 // 标签从标题里挑技能词，不铺正文、不生成「AI 摘要」。
@@ -60,8 +67,8 @@ function onAvatarError(e) {
 
     <footer class="quest-card__foot">
       <div class="quest-card__foot-left">
-        <img class="quest-card__avatar" :src="avatarUrl(post.authorAvatar)" alt="" @error="onAvatarError">
-        <span class="quest-card__author-name">{{ post.authorName || '匿名用户' }}</span>
+        <img class="quest-card__avatar" :src="avatarUrl(author.authorAvatar)" alt="" @error="onAvatarError">
+        <span class="quest-card__author-name">{{ author.authorName || '匿名用户' }}</span>
       </div>
       <div class="quest-card__meta-right">
         <span v-if="post.questDeadline">截止 {{ formatDeadline(post.questDeadline) }}</span>

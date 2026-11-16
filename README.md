@@ -91,6 +91,24 @@ cd ..
 - 代码、配置、数据库一律放持久化目录；容器重建时非持久化目录会丢
 - 静态资源带扩展名且找不到时返回 404，无扩展名的路径按 SPA 回退到 `index.html`
 
+## 平台 dev 部署（独立 Pod，不接 UniSSO / 主站）
+
+dev 用**独立部署单元**，只绑仓库 `dev` 分支；切换完全靠平台的环境变量，不改表单里的启动脚本：
+
+| 变量 | 值 | 说明 |
+|---|---|---|
+| `MIRROR_DEV_MODE` | `1` | 必填。切到 dev 演示模式；不设就走下面的生产路径 |
+| `PORT` | 平台分配 | 默认 `8080` |
+| `MIRROR_DEV_DATA` | 持久化目录 | 可选，演示状态与演示库落点（默认 `dev/_state/`，已 gitignore） |
+| `MIRROR_STATIC_DIR` | `web/dist` | 可选，静态产物目录 |
+| `MIRROR_DEV_NO_LOGIN` | `1`（默认） | 打开即进入演示账号；设 `0` 则显示登录页 |
+
+`deploy.sh` 检测到 `MIRROR_DEV_MODE=1` 后：若缺 `web/dist/index.html` 就在容器内 `npm ci`、从 `.env.dev.example` 生成 `.env.dev`、`npm run build -- --mode dev`，并校验产物 API 基址没有被环境污染，再 `exec python3 dev/dev_gateway.py`。**这里必须走 env 文件**：用 `VITE_API_BASE=/api` 环境变量时，Git Bash / MSYS 会把 `/api` 转成本地路径 `file:///.../PortableGit/api` 打进产物，页面能开但所有接口都打不出去。**一个前台进程**同时托管静态、`/api/*` 演示接口与 `/mirror-api/*` 契约接口，不访问 UniSSO、不连主站、不需要第二个后端进程；健康门 `GET /mirror-api/healthz` 返回 `{"ok":true,"service":"mirror-dev",...}`。演示数据与演示库只落在 dev Pod，绝不写生产库。
+
+`dev/dev_gateway.py` 直接 import 仓库 `contracts/`，**不在 dev 目录保留任何契约副本**（`npm run verify` 会强制检查）。它只在显式开关下启动，未命中的接口返回 JSON 错误而不是把 `index.html` 当接口回给浏览器——后者正是「页面能开、后台一直在报错」的典型原因。
+
+**生产行为零变化**：不设该变量时仍是 `deploy.sh` 静态服务 / `run.sh` 真后端；真后端仍强制要求 `UNISSO_CLIENT_ID` / `UNISSO_CLIENT_SECRET`。若只是想在 dev 起真后端联调，`MIRROR_DEV_MODE=1` 仅放宽**启动校验**，登录与 SSO 接口仍返回 503，**不绕过身份校验**。
+
 ## 开发约定
 
 - 一个改动一个分支（`feature/*`、`fix/*`），走 PR 合并，不直接推主干
@@ -170,6 +188,26 @@ cd ..
   `contactWorker` 跳转带 `post` 参数，`MessagesView.vue` 据此上报沟通；
   `MyPostsView.vue` 刷新即看到最新值。会话列表的时间取真实聊天记录 / 帖子发布时间，
   未读红点在桌面与手机都由同一份 `stores/unread.js` 状态渲染。
+
+## 发布者展示契约（改名跟随）
+
+`authorID` 才是身份，**`authorName` / `authorAvatar` / `authorScore` 只是发布当时的快照**。
+早期试玩里把昵称写死进帖子，账号改名后出现「补充说明署名是新名字、发布者栏还是旧名字」
+的同人双名；修法是展示时按 ID 关联当前账号资料，**不批量回写历史数据**——回写既容易漏
+（评论、订单、私聊各存一份），也会抹掉发布当时的原始记录。
+
+- 规则唯一真源 `contracts/author-display.json`：身份字段、账号字段、宽松字符串匹配、
+  三组展示字段映射、兜底文案。`contracts/author_display.py`（服务端）与
+  `web/src/utils/author.js`（前端）读同一份契约，`npm run verify` 用 9 组用例比对两端输出。
+- 前端展示层：`QuestCard.vue` / `QuestDetail.vue` / `AuthorNotes.vue` 用
+  `withCurrentAuthor(record, me)` 解析，`PostPreview.vue` 把 `authorID` 一起带进草稿；
+  身份判断统一走 `isSameAccount()`，不再各处写 `===`（真后端返回字符串 ID 也能对上）。
+  因为 `me` 是响应式 store，改名后不用重新拉列表就能跟上。
+- 服务端出口：dev 网关与本地试玩包在 `with_comments()`（列表 / 详情共用）调用
+  `with_current_author()`，保证 API 返回值本身一致，不只靠前端兜底。生产后端只向主站
+  核实 `authorID` 归属、不返回帖子内容，因此不实现展示逻辑。
+- 别人的帖子保持后端返回的快照：调用方拿不到他人的最新资料，不做猜测性覆盖。
+- `npm run verify` 额外检查：契约副本齐全一致、各组件复用统一解析、改名不回写历史帖子。
 
 ## 首屏封面（沕鉴·Mirror hero）
 
