@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getToken } from '../api/client'
+import { apiRequest } from '../api/client'
 
 const router = useRouter()
 const text = ref('')
@@ -17,23 +17,15 @@ async function submit() {
   error.value = ''
   msg.value = ''
   try {
-    const base = (import.meta.env.VITE_API_BASE || 'https://ssemarket.cn/api').replace(/\/$/, '')
-    const res = await fetch(`${base}/auth/submitFeedback`, {
+    await apiRequest('/auth/submitFeedback', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getToken()}`,
-      },
-      body: JSON.stringify({ ftext: body }),
+      body: { ftext: body },
     })
-    const data = await res.json()
-    if (data.code !== 200)
-      throw new Error(data.msg || '提交失败')
     text.value = ''
     msg.value = '感谢你的反馈'
   }
   catch (e) {
-    error.value = e.message
+    error.value = e?.message || '提交失败，请稍后重试'
   }
   finally {
     sending.value = false

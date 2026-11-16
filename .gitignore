@@ -9,6 +9,7 @@ web/dist/
 .env
 .env.*
 !.env.example
+!web/.env.dev.example
 *.pem
 *.key
 credentials.json

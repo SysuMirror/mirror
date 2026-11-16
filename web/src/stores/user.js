@@ -1,6 +1,7 @@
 import { reactive } from 'vue'
 import { fetchQuestMe } from '../api/auth'
 import { getToken, setToken } from '../api/client'
+import { setUnreadScope } from './unread'
 
 const state = reactive({
   token: getToken(),
@@ -17,17 +18,25 @@ export function useUserStore() {
     logout() {
       state.token = ''
       state.me = null
+      setUnreadScope(null)
       setToken('')
     },
     setToken(t) {
       state.token = t
       setToken(t)
+      if (!t) {
+        state.me = null
+        setUnreadScope(null)
+      }
     },
     async refreshMe() {
       if (!state.token)
         return null
-      state.me = await fetchQuestMe()
-      return state.me
+      const me = await fetchQuestMe()
+      state.me = me
+      // 已读基线按账号隔离，换号登录后不会串到别人的红点
+      setUnreadScope(me?.userID || state.token)
+      return me
     },
   }
 }

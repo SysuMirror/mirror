@@ -26,16 +26,16 @@ export async function login(email, password) {
 
 const MIRROR_API_BASE = '/mirror-api'
 
+// 镜像站 /mirror-api/* 是另一套接口（登录、注册），同样走统一出口，
+// 只是 base 不同、不带主站 token、错误文案字段是 error。
 async function mirrorRequest(path, body) {
-  const res = await fetch(`${MIRROR_API_BASE}${path}`, {
+  return apiRequest(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body,
+    auth: false,
+    base: MIRROR_API_BASE,
+    raw: true,
   })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok)
-    throw new Error(data.error || `HTTP ${res.status}`)
-  return data
 }
 
 export async function unissoLogin(email, password) {

@@ -1,42 +1,30 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getChatNotice, getNoticeUnread } from '../api/chat'
 import { useUserStore } from '../stores/user'
+import { unreadTotal } from '../stores/unread'
 import MineSheet from './MineSheet.vue'
 
 const route = useRoute()
 const router = useRouter()
 const user = useUserStore()
-const unread = ref(0)
+const unread = unreadTotal
 const mineOpen = ref(false)
-let timer
 
 const tabs = [
-  { name: 'home', path: '/', label: '大厅' },
+  { name: 'home', path: '/hall', label: '大厅' },
   { name: 'create', path: '/create', label: '发帖' },
   { name: 'messages', path: '/messages', label: '消息' },
   { name: 'profile', path: '/profile', label: '我的' },
 ]
 
 const hideNav = computed(() =>
-  route.name === 'login' || route.name === 'detail',
+  route.name === 'login' || route.name === 'detail' || route.name === 'cover',
 )
 
 const mineActive = computed(() =>
   route.name === 'profile' || route.name === 'feedback' || mineOpen.value,
 )
-
-async function refreshUnread() {
-  if (!user.me?.userID)
-    return
-  try {
-    const chat = await getChatNotice(user.me.userID)
-    const notice = await getNoticeUnread()
-    unread.value = chat + notice
-  }
-  catch { /* ignore */ }
-}
 
 function onTab(t) {
   if (t.name === 'profile') {
@@ -57,18 +45,13 @@ function isActive(t) {
 }
 
 function onMineSelect(key) {
-  if (key === 'profile')
+  if (key === 'myposts')
+    router.push({ name: 'myposts' })
+  else if (key === 'profile')
     router.push({ name: 'profile' })
   else if (key === 'feedback')
     router.push({ name: 'feedback' })
 }
-
-onMounted(() => {
-  refreshUnread()
-  timer = setInterval(refreshUnread, 45000)
-})
-
-onUnmounted(() => clearInterval(timer))
 </script>
 
 <template>

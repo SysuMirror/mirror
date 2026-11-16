@@ -22,6 +22,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.request import build_opener, ProxyHandler, Request
 
+from contracts.money_rules import validate_budget
+from contracts.notes import NoteStore, handle_notes
+from contracts.post_stats import PostStatStore, handle_stats
+
 ROOT = Path(__file__).resolve().parent
 DIST = ROOT / "web" / "dist"
 DB_PATH = ROOT / "mirror.db"
@@ -85,6 +89,12 @@ def db():
 
 
 DB = db()
+
+# 发布者补充说明独立成库：清空/重建不影响订单，也不需要改动 orders 表结构。
+# 契约或建表失败时服务会直接启动失败，不会带着半成品规则继续对外提供接口。
+NOTES = NoteStore(ROOT / "mirror_notes.db")
+# 浏览 / 沟通计数同样独立成库：增量不写订单表，清库即可复位。
+STATS = PostStatStore(ROOT / "mirror_stats.db")
 
 
 def ensure_column(table, column, ddl):
@@ -483,8 +493,17 @@ def allow_rate(ip, limit=40, seconds=60):
 class MirrorHandler(BaseHTTPRequestHandler):
     server_version = "Mirror/2.0"
 
-    def log_message(self, fmt, *args):
-        return
+    def log_request(self, code="-", size="-"):
+        # 只记录 API 请求和出错的静态资源，避免每次刷新都刷一屏 js/css 日志
+        if self.path.startswith("/mirror-api/") or (isinstance(code, int) and code >= 400):
+            print(
+                f'{self.log_date_time_string()} {self.client_address[0]} '
+                f'"{self.requestline}" {code}',
+                flush=True,
+            )
+
+    def log_error(self, fmt, *args):
+        print(f"{self.log_date_time_string()} ERROR {fmt % args}", flush=True)
 
     def send(self, status, headers, body):
         self.send_response(status)
@@ -507,6 +526,11 @@ class MirrorHandler(BaseHTTPRequestHandler):
         path = (DIST / relative.lstrip("/")).resolve()
         if not str(path).startswith(str(DIST.resolve())):
             self.send(403, {"Content-Type": "text/plain"}, b"Forbidden")
+            return
+        # 带扩展名的静态资源找不到就老实返回 404；
+        # 否则浏览器会把 index.html 当 js/css 解析，白屏且极难排查。
+        if path.suffix and (not path.exists() or path.is_dir()):
+            self.send(404, {"Content-Type": "text/plain; charset=utf-8"}, b"Not Found")
             return
         if not path.exists() or path.is_dir():
             path = DIST / "index.html"
@@ -543,15 +567,85 @@ class MirrorHandler(BaseHTTPRequestHandler):
                 sid = auth[7:].strip()
         return resolve_session(sid)
 
+    def market_post(self, session, post_id):
+        """向主站核实帖子归属。批注与统计共用，避免两处各写一遍上游调用。"""
+        token = session["market_token"] if session else ""
+        if not token:
+            token, _user = official_market_token()
+        data = market_json("/api/auth/quest/detail", token=token,
+                           payload={"postID": int(post_id)})
+        post = (data.get("data") or {}).get("post") or data.get("post") or {}
+        return {"authorID": str(post.get("authorID") or "")} if post else None
+
+    def mirror_actor(self):
+        """身份只取自会话，绝不读请求体里的用户 ID。"""
+        session = self.current_session()
+        actor = None
+        if session:
+            actor = {
+                "id": str(session["market_user_id"] or ""),
+                "name": session["name"] or session["email"] or "发布者",
+            }
+        return session, actor
+
+    def notes_api(self, method, path, query, body):
+        """发布者补充说明：身份取自会话，帖子归属取自主站，均不信任请求体。"""
+        if not path.startswith("/mirror-api/"):
+            path = "/mirror-api" + path  # do_POST 分发时已剥掉前缀
+        session, actor = self.mirror_actor()
+        status, payload = handle_notes(
+            path, method=method, query=query, body=body,
+            actor=actor,
+            resolve_post=lambda pid: self.market_post(session, pid),
+            store=NOTES,
+        )
+        self.reply(payload, status)
+
+    def stats_api(self, method, path, query, body):
+        """帖子浏览 / 沟通计数：同一套契约实现，生产端没有演示基线，只返回增量。"""
+        if not path.startswith("/mirror-api/"):
+            path = "/mirror-api" + path
+        session, actor = self.mirror_actor()
+        status, payload = handle_stats(
+            path, method=method, query=query, body=body,
+            actor=actor,
+            resolve_post=lambda pid: self.market_post(session, pid),
+            store=STATS, base=None,
+        )
+        self.reply(payload, status)
+
     # ---------- 路由 ----------
 
     def do_GET(self):
         parsed = urllib.parse.urlsplit(self.path)
         path = parsed.path
+        if path == "/mirror-api/healthz":
+            self.api_healthz()
+            return
+        if path.startswith("/mirror-api/notes/") or path == "/mirror-api/stats/get":
+            if not allow_rate(client_ip(self)):
+                self.reply({"error": "too many requests"}, 429)
+                return
+            handler = self.notes_api if path.startswith("/mirror-api/notes/") else self.stats_api
+            handler("GET", path, urllib.parse.parse_qs(parsed.query), {})
+            return
         if path.startswith("/mirror-api/"):
             self.api_get(path, urllib.parse.parse_qs(parsed.query))
             return
         self.static_file(path or "/")
+
+    def api_healthz(self):
+        # 平台健康门 / 部署探针用；不经过限流，不暴露任何配置或密钥
+        try:
+            with db_lock:
+                DB.execute("SELECT 1").fetchone()
+            db_ok = True
+        except Exception:
+            db_ok = False
+        self.reply(
+            {"ok": db_ok, "service": "mirror", "db": "ok" if db_ok else "unavailable"},
+            200 if db_ok else 503,
+        )
 
     def do_HEAD(self):
         self.do_GET()
@@ -566,7 +660,11 @@ class MirrorHandler(BaseHTTPRequestHandler):
                 return
             value = read_json(self)
             path = self.path.split("?")[0].removeprefix("/mirror-api")
-            if path == "/auth/login":
+            if path.startswith("/notes/"):
+                self.notes_api("POST", path, {}, value)
+            elif path.startswith("/stats/"):
+                self.stats_api("POST", path, {}, value)
+            elif path == "/auth/login":
                 self.login(value)
             elif path == "/auth/sso/try":
                 self.sso_try()
@@ -745,25 +843,13 @@ class MirrorHandler(BaseHTTPRequestHandler):
         if not contact:
             self.reply({"error": "请留下称呼和联系方式"}, 400)
             return
-        budget_type = value.get("budgetType") if value.get("budgetType") in ("fixed", "range", "negotiable") else "negotiable"
-        budget_min = budget_max = None
-        if budget_type == "fixed":
-            try:
-                budget_min = float(value.get("budgetMin"))
-                if budget_min <= 0:
-                    raise ValueError
-            except (TypeError, ValueError):
-                self.reply({"error": "预算金额无效"}, 400)
-                return
-        elif budget_type == "range":
-            try:
-                budget_min = float(value.get("budgetMin"))
-                budget_max = float(value.get("budgetMax"))
-                if not (0 < budget_min <= budget_max):
-                    raise ValueError
-            except (TypeError, ValueError):
-                self.reply({"error": "预算区间无效"}, 400)
-                return
+        # 金额规则只在 contracts/money-rules.json 定义一次，前后端共用同一套口径
+        budget_type, budget_min, budget_max, budget_error = validate_budget(value)
+        if budget_error:
+            self.reply({"error": budget_error}, 400)
+            return
+        db_min = float(budget_min) if budget_min is not None else None
+        db_max = float(budget_max) if budget_max is not None else None
         expect_date = (value.get("expectDate") or "").strip()[:32]
         order_id = "o" + secrets.token_hex(8)
         created = now_iso()
@@ -772,7 +858,7 @@ class MirrorHandler(BaseHTTPRequestHandler):
                 "INSERT INTO orders (id, title, content, budget_type, budget_min, budget_max,"
                 " contact_name, contact_method, expect_date, owner_email, owner_name, status, created, updated)"
                 " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)",
-                (order_id, fields["title"], fields["content"], budget_type, budget_min, budget_max,
+                (order_id, fields["title"], fields["content"], budget_type, db_min, db_max,
                  contact["contactName"], contact["contactMethod"], expect_date,
                  session["email"], session["name"], created, created),
             )

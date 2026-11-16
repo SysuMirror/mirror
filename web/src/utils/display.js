@@ -11,7 +11,7 @@ export const STATUS_LABEL = {
 }
 
 /** 与集市 Reward.md / newSSE level.ts 一致 */
-export const QUEST_LEVELS = [
+const QUEST_LEVELS = [
   { code: 'lv0', name: 'Lv0 菜鸟', min: 0, max: 99 },
   { code: 'lv1', name: 'Lv1 大虾', min: 100, max: 299 },
   { code: 'lv2', name: 'Lv2 码农', min: 300, max: 599 },
@@ -37,8 +37,28 @@ export function avatarUrl(url) {
   return u || DEFAULT_AVATAR
 }
 
+/** 浏览 / 沟通等统计值统一格式化：脏数据、负数、字符串收敛成非负整数。 */
+export function statCount(value) {
+  const n = Number(value)
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0
+}
+
+/** 会话列表头像色块：按名字取一个稳定的低饱和底色，避免整列灰色占位。 */
+export function avatarTone(name = '') {
+  const palette = ['#dbeafe', '#e0f2f1', '#fef3c7', '#fce7f3', '#ede9fe', '#dcfce7']
+  let sum = 0
+  for (const ch of String(name))
+    sum += ch.codePointAt(0) || 0
+  return palette[sum % palette.length]
+}
+
+export function avatarInitial(name = '') {
+  const text = String(name || '').trim()
+  return text ? [...text][0].toUpperCase() : '·'
+}
+
 /** @returns {{ kind: 'money'|'muted', yen?: string, num?: string, text?: string }} */
-export function priceBand(post) {
+function priceBand(post) {
   if (!post || post.postKind === 'inquiry')
     return { kind: 'muted', text: '求帮' }
 
@@ -87,4 +107,20 @@ export function relativeTime(iso) {
   if (d < 7)
     return `${d}天前`
   return new Date(iso).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' })
+}
+
+/** 会话列表时间：后端只给 ISO 时间，显示格式统一在前端，不在各端硬编码中文时间串。 */
+export function chatTimeLabel(iso) {
+  if (!iso)
+    return ''
+  const t = new Date(iso).getTime()
+  if (Number.isNaN(t))
+    return ''
+  const d = new Date(t)
+  const now = new Date()
+  if (d.toDateString() === now.toDateString())
+    return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  if (now - d < 7 * 86400000)
+    return d.toLocaleDateString('zh-CN', { weekday: 'short' })
+  return d.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' })
 }

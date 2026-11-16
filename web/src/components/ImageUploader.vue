@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { uploadQuestImage } from '../api/upload'
 
 const props = defineProps({

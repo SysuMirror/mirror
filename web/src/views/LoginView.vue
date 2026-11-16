@@ -52,7 +52,7 @@ function validateRegistrationPasswords() {
 async function finishSession(token) {
   user.setToken(token)
   await user.refreshMe()
-  router.replace(route.query.redirect || '/')
+  router.replace(route.query.redirect || '/hall')
 }
 
 async function submitLogin() {

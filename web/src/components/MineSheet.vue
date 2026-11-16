@@ -5,6 +5,7 @@ defineProps({
 const emit = defineEmits(['close', 'select'])
 
 const items = [
+  { key: 'myposts', label: '需求管理（我发布的）' },
   { key: 'profile', label: '个人信息' },
   { key: 'feedback', label: '反馈' },
 ]

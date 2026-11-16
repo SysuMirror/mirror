@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "comment": "帖子浏览数 / 沟通数的计数口径唯一真源。生产后端 server.py、dev 网关、本地试玩包共用 contracts/post_stats.py；增量落独立 SQLite，不写主站、不改演示快照。改口径只改本文件与 post_stats.py，scripts/verify.mjs 强制检查各端副本一致。",
+  "dedupe": {
+    "view": "同一账号对同一帖只计一次浏览；作者浏览自己的帖子不计",
+    "chat": "同一账号在同一帖对同一对象只计一次沟通；自己联系自己不计"
+  },
+  "messages": {
+    "login": "请先登录后再操作",
+    "postID": "需求编号不合法",
+    "peerID": "对方编号不合法",
+    "notFound": "这条需求不存在或已被删除",
+    "unavailable": "统计暂时不可用，请稍后重试"
+  }
+}
