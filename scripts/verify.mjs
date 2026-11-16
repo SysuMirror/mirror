@@ -711,6 +711,52 @@ ok('未读轮询有失败退避，后端挂掉不刷屏',
 ok('页面声明内联 favicon，消除 404',
   webHtml.includes('rel="icon"') && webHtml.includes('data:image/svg+xml'))
 
+// 仓库内 dev 网关自身的卫生：不能只查仓库外的旧副本，否则新网关成了自检盲区
+const gwLines = devGateway.split('\n')
+const gwBody = gwLines.filter(l => !/^(import|from)\s/.test(l)).join('\n')
+const gwUnusedImports = gwLines.filter(l => /^(import|from)\s/.test(l)).flatMap(l => {
+  const plain = l.match(/^import\s+(\w+)/)
+  if (plain) return [plain[1]]
+  const from = l.match(/^from\s+[\w.]+\s+import\s+(.+)$/)
+  if (!from) return []
+  return from[1].split(',').map(part => {
+    const aliased = part.trim().match(/\s+as\s+(\w+)$/)
+    return aliased ? aliased[1] : part.trim().split(/\s+/)[0]
+  }).filter(Boolean)
+}).filter(name => !new RegExp(`\\b${name}\\b`).test(gwBody))
+ok('dev 网关无未使用 import', gwUnusedImports.length === 0, gwUnusedImports.join(', '))
+ok('dev 网关无恒真分支与不可达死代码',
+  !devGateway.includes('self._json(404, {"error": "not found"})')
+  && !/if UPSTREAM:\s*\n\s*url = UPSTREAM/.test(devGateway)
+  && devGateway.includes('def _fallback(') && devGateway.includes('def _upstream('))
+ok('dev 网关访问日志已收敛，正常轮询不刷后台日志',
+  /def log_message[\s\S]{0,400}status >= 500/.test(devGateway)
+  && devGateway.includes('def log_error('))
+ok('dev 网关拦掉客户端断开的 traceback 刷屏',
+  /class DevHTTPServer[\s\S]{0,500}def handle_error[\s\S]{0,500}ConnectionError/.test(devGateway))
+ok('dev 网关线程可退出且端口可复用',
+  devGateway.includes('daemon_threads = True')
+  && devGateway.includes('allow_reuse_address = True')
+  && devGateway.includes('DevHTTPServer(('))
+ok('dev 网关不再依赖第二个后端进程',
+  !devGateway.includes('127.0.0.1:8082') && !devGateway.includes('dev-env'))
+
+// 身份判断单一真源：不允许某个视图又偷偷写一个 ===
+const authorUtils = read(join(REPO, 'web', 'src', 'utils', 'author.js'))
+ok('身份比较单一真源：sameAccountId 供 isSameAccount 复用',
+  authorUtils.includes('export function sameAccountId(')
+  && /export function isSameAccount[\s\S]{0,200}return sameAccountId\(/.test(authorUtils))
+for (const file of ['components/QuestCard.vue', 'components/QuestDetail.vue',
+  'components/AuthorNotes.vue', 'views/MessagesView.vue', 'views/MyPostsView.vue']) {
+  const text = read(join(REPO, 'web', 'src', file))
+  ok(`${short(file)} 身份/发布者逻辑统一走契约`,
+    text.includes("from '../utils/author'")
+    && !/\b(?:userID|authorID|workerID|peerID)\s*===\s*/.test(text))
+}
+ok('前端无裸 ID 身份比较',
+  !/\b(?:userID|authorID|workerID|peerID)\s*===\s*/.test(
+    srcFiles.filter(f => f.endsWith('.vue') || f.endsWith('.js')).map(read).join('\n')))
+
 // ---------------------------------------------------------------- 结果
 console.log(`\n生产自检：${checks.length - failures.length}/${checks.length} 项通过`)
 if (failures.length) {

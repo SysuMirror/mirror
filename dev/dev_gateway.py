@@ -15,7 +15,6 @@ import base64
 import hashlib
 import json
 import os
-import secrets
 import struct
 import sys
 import threading
@@ -451,7 +450,18 @@ class Gateway(BaseHTTPRequestHandler):
     server_version = "mirror-dev-gateway/1.0"
 
     def log_message(self, fmt, *args):
-        print(f"{self.log_date_time_string()} {fmt % args}", flush=True)
+        # 只输出 5xx：4xx（favicon、旧缓存资源）和正常轮询量大且无排障价值，
+        # 未读轮询 + 心跳在 dev Pod 上会把后台日志刷爆。
+        code = args[1] if len(args) > 1 else None
+        try:
+            status = int(code)
+        except (TypeError, ValueError):
+            return
+        if status >= 500:
+            print(f"{self.log_date_time_string()} {fmt % args}", flush=True)
+
+    def log_error(self, fmt, *args):
+        print(f"[mirror-dev] {fmt % args}", flush=True)
 
     # ---------- 工具 ----------
     def _read_body(self):
@@ -486,10 +496,10 @@ class Gateway(BaseHTTPRequestHandler):
             status, payload = mock_dispatch(parsed.path, {}, parse_qs(parsed.query), "GET")
             self._json(status, payload)
             return
-        self._proxy("GET", None)
+        self._fallback("GET", None)
 
     def do_HEAD(self):
-        self._proxy("HEAD", None)
+        self._fallback("HEAD", None)
 
     def do_POST(self):
         raw = self._read_body()
@@ -505,47 +515,47 @@ class Gateway(BaseHTTPRequestHandler):
             )
             self._json(status, payload)
             return
-        self._proxy("POST", raw)
+        self._fallback("POST", raw)
 
-    def _proxy(self, method, raw):
-        """dev 默认自给自足：静态产物由本进程托管。
+    def _fallback(self, method, raw):
+        """未命中演示接口时的统一兜底分发。
 
-        只有显式配置 MIRROR_DEV_UPSTREAM 时才转发给真后端；
-        /mirror-api/* 未命中的演示接口一律回 JSON 错误，绝不回退成 index.html，
-        避免前端把 HTML 当 JSON 解析而刷出一堆控制台错误。
+        dev 默认自给自足：静态产物由本进程托管；只有显式配置
+        MIRROR_DEV_UPSTREAM 时才转发给真后端。/mirror-api/* 未命中的接口
+        一律回 JSON 错误，绝不回退成 index.html，避免前端把 HTML 当 JSON
+        解析而刷出一堆控制台错误。
         """
         parsed = urlsplit(self.path)
-        if parsed.path.startswith("/mirror-api/"):
-            if not UPSTREAM:
+        if not UPSTREAM:
+            if parsed.path.startswith("/mirror-api/"):
                 return self._json(502, {"error": "upstream not configured in dev mode"})
-        elif not UPSTREAM:
             return self._static(method)
-        if UPSTREAM:
-            url = UPSTREAM + self.path
-            headers = {k: v for k, v in self.headers.items()
-                       if k.lower() not in ("host", "content-length", "connection", "accept-encoding")}
-            if raw is not None:
-                headers["Content-Length"] = str(len(raw))
-            req = urllib.request.Request(url, data=raw if method == "POST" else None,
-                                         headers=headers, method=method)
-            try:
-                with urllib.request.urlopen(req, timeout=20) as resp:
-                    body, status = resp.read(), resp.status
-                    ctype = resp.headers.get("Content-Type", "application/octet-stream")
-            except urllib.error.HTTPError as exc:
-                body, status = exc.read(), exc.code
-                ctype = exc.headers.get("Content-Type", "application/octet-stream")
-            except Exception as exc:
-                body = json.dumps({"error": f"upstream unavailable: {exc}"}).encode()
-                status, ctype = 502, "application/json"
-            self.send_response(status)
-            self.send_header("Content-Type", ctype)
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            if method != "HEAD":
-                self.wfile.write(body)
-            return
-        self._json(404, {"error": "not found"})
+        return self._upstream(method, raw)
+
+    def _upstream(self, method, raw):
+        url = UPSTREAM + self.path
+        headers = {k: v for k, v in self.headers.items()
+                   if k.lower() not in ("host", "content-length", "connection", "accept-encoding")}
+        if raw is not None:
+            headers["Content-Length"] = str(len(raw))
+        req = urllib.request.Request(url, data=raw if method == "POST" else None,
+                                     headers=headers, method=method)
+        try:
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                body, status = resp.read(), resp.status
+                ctype = resp.headers.get("Content-Type", "application/octet-stream")
+        except urllib.error.HTTPError as exc:
+            body, status = exc.read(), exc.code
+            ctype = exc.headers.get("Content-Type", "application/octet-stream")
+        except Exception as exc:
+            body = json.dumps({"error": f"upstream unavailable: {exc}"}).encode()
+            status, ctype = 502, "application/json"
+        self.send_response(status)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        if method != "HEAD":
+            self.wfile.write(body)
 
     # ---------- 静态产物 ----------
     CONTENT_TYPES = {
@@ -644,6 +654,22 @@ class Gateway(BaseHTTPRequestHandler):
         self.wfile.flush()
 
 
+class DevHTTPServer(ThreadingHTTPServer):
+    """前台进程退出时不等连接线程；端口可立即复用，便于平台重启 Pod。"""
+    daemon_threads = True
+    allow_reuse_address = True
+
+    def handle_error(self, request, client_address):
+        # socketserver 默认把整段 traceback 打到后台日志：HTTP/1.1 长连接下
+        # 浏览器切页、轮询取消都会触发 ConnectionAbortedError，高频时就是
+        # 「报了一万条错」。客户端提前断开属常态，静默；其余异常只打一行，
+        # 保留排障线索，不再输出几十行堆栈。
+        exc = sys.exc_info()[1]
+        if isinstance(exc, ConnectionError):
+            return
+        print(f"[mirror-dev] 请求处理异常 {type(exc).__name__}: {exc}", flush=True)
+
+
 def main():
     if not DEV_MODE:
         raise SystemExit(
@@ -657,7 +683,7 @@ def main():
     print(f"[mirror-dev] DEV MODE：UniSSO / 主站均不接入，演示数据隔离于 {DATA_DIR}", flush=True)
     print(f"[mirror-dev] 静态 {DIST} | 上游 {UPSTREAM or '(未配置，自给自足)'}", flush=True)
     print(f"[mirror-dev] listening on 0.0.0.0:{PORT}", flush=True)
-    ThreadingHTTPServer(("0.0.0.0", PORT), Gateway).serve_forever()
+    DevHTTPServer(("0.0.0.0", PORT), Gateway).serve_forever()
 
 
 if __name__ == "__main__":

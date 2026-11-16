@@ -118,7 +118,7 @@ async function submit() {
     </div>
 
     <template v-else>
-      <ol v-if="notes.length" class="note-timeline">
+      <ol v-if="resolvedNotes.length" class="note-timeline">
         <li v-for="(item, i) in resolvedNotes" :key="item.id" class="note-timeline__item">
           <span class="note-timeline__dot">{{ i + 1 }}</span>
           <div class="note-timeline__body">

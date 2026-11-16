@@ -14,15 +14,17 @@ import rules from '../../../contracts/author-display.json'
  *
  * @returns {boolean} 两个 ID 是否指向同一个账号（宽松字符串比较）
  */
+export function sameAccountId(a, b) {
+  if (a === undefined || a === null || a === ''
+    || b === undefined || b === null || b === '')
+    return false
+  return String(a) === String(b)
+}
+
 export function isSameAccount(record, me) {
   if (!record || typeof record !== 'object' || !me || typeof me !== 'object')
     return false
-  const recordId = record[rules.identityField]
-  const accountId = me[rules.accountIdField]
-  if (recordId === undefined || recordId === null || recordId === ''
-    || accountId === undefined || accountId === null || accountId === '')
-    return false
-  return String(recordId) === String(accountId)
+  return sameAccountId(record[rules.identityField], me[rules.accountIdField])
 }
 
 /**

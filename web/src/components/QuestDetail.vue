@@ -14,7 +14,7 @@ import {
 } from '../api/quest'
 import { recordPostView } from '../api/stats'
 import { useUserStore } from '../stores/user'
-import { isSameAccount, withCurrentAuthor } from '../utils/author'
+import { isSameAccount, sameAccountId, withCurrentAuthor } from '../utils/author'
 import {
   DEFAULT_AVATAR,
   STATUS_LABEL,
@@ -39,7 +39,7 @@ const statusDraft = ref('open')
 const submitNote = ref('')
 
 const isOwner = computed(() => isSameAccount(post.value, user.me))
-const isWorker = computed(() => post.value?.order && user.me?.userID === post.value.order.workerID)
+const isWorker = computed(() => post.value?.order && sameAccountId(user.me?.userID, post.value.order.workerID))
 // 发布者资料按 authorID 关联当前账号：改名后不会出现「补充说明里是新名字、发布者栏还是旧名字」。
 const publisher = computed(() => withCurrentAuthor(post.value, user.me) || {})
 const isBounty = computed(() => post.value?.postKind === 'bounty')

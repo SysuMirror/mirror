@@ -6,6 +6,7 @@ import { fetchChatPeers, fetchUserInfo } from '../api/quest'
 import { recordPostChat } from '../api/stats'
 import { useUserStore } from '../stores/user'
 import { markPeerRead, unreadOf, unreadTotal } from '../stores/unread'
+import { sameAccountId } from '../utils/author'
 import { avatarInitial, avatarTone, chatTimeLabel } from '../utils/display'
 
 const route = useRoute()
@@ -174,7 +175,7 @@ function send() {
 }
 
 function openPeer(id) {
-  const hit = peers.value.find(p => p.userID === id)
+  const hit = peers.value.find(p => sameAccountId(p.userID, id))
   if (hit)
     hit.unread = 0
   router.push({ name: 'messages', query: { user: String(id) } })
@@ -284,7 +285,7 @@ onUnmounted(closeWs)
             v-for="p in peers"
             :key="p.userID"
             class="peer-item"
-            :class="{ active: p.userID === peerID }"
+            :class="{ active: sameAccountId(p.userID, peerID) }"
             @click="openPeer(p.userID)"
           >
             <div class="peer-item__avatar" :style="{ background: avatarTone(p.name) }">

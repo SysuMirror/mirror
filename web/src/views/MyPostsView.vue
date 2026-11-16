@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchQuestList } from '../api/quest'
 import { useUserStore } from '../stores/user'
+import { sameAccountId } from '../utils/author'
 import { formatPrice, relativeTime, statCount, STATUS_LABEL } from '../utils/display'
 
 // 对齐 BOSS 直聘「职位管理」：状态 tab + 职位卡列表 + 右侧两列数据
@@ -52,7 +53,7 @@ async function load() {
     const myID = user.me?.userID
     items.value = myID == null
       ? all
-      : all.filter(p => String(p.authorID) === String(myID))
+      : all.filter(p => sameAccountId(p.authorID, myID))
   }
   catch (e) {
     if (seq !== loadSeq)
