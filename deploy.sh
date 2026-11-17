@@ -14,7 +14,9 @@ if [ "${MIRROR_DEV_MODE:-0}" = "1" ]; then
   if [ ! -f "$DIST/index.html" ]; then
     echo "[mirror-dev] web/dist 缺失，开始构建前端（dev 模式，同源 /api）" >&2
     ( cd "$ROOT/web" && {
-        [ -d node_modules ] || npm ci
+        # 用 vite 可执行文件判断依赖是否装全：残留的半截 node_modules（有目录、无 .bin）
+        # 会让安装被跳过，随后 npm run build 报 sh: 1: vite: not found。
+        [ -x node_modules/.bin/vite ] || npm ci --include=dev
         # 必须走 .env.dev 文件，不能用 VITE_API_BASE=/api 环境变量：
         # Git Bash / MSYS 会把 /api 转成本地路径（file:///.../PortableGit/api），
         # 打进产物后整站接口都会失败，而且页面看起来「能打开」。
