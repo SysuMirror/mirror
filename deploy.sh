@@ -6,9 +6,13 @@ ROOT="$(pwd)"
 PORT="${PORT:-8080}"
 DIST="${ROOT}/web/dist"
 
-if [ ! -d "$DIST" ]; then
-  echo "missing web/dist — run: cd quest/web && npm ci && npm run build"
-  exit 1
+if [ ! -d "$DIST/assets" ]; then
+  echo "[deploy] web/dist 缺失或不完整，开始构建前端" >&2
+  rm -rf "$DIST"
+  cd "$ROOT/web"
+  [ -x node_modules/.bin/vite ] || npm ci --include=dev
+  npm run build
+  cd "$ROOT"
 fi
 
 export QUEST_STATIC_DIR="$DIST"
