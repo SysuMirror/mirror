@@ -8,7 +8,6 @@ DIST="${ROOT}/web/dist"
 
 if [ ! -f "$DIST/index.html" ] || [ ! -d "$DIST/assets" ]; then
   echo "[deploy] web/dist 缺失或不完整，开始构建前端" >&2
-  rm -rf "$DIST"
   cd "$ROOT/web"
   [ -x node_modules/.bin/vite ] || npm ci --include=dev
   npm run build
