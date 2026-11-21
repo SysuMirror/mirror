@@ -1,10 +1,15 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { mountGalaxy } from './galaxyField'
 
 const props = defineProps({
   max: { type: Number, default: 96 },
   density: { type: Number, default: 15000 },
   mouseLink: { type: Boolean, default: true },
+  nodes: { type: Array, default: null },
+  activeNode: { type: Object, default: null },
+  regionHovered: { type: Boolean, default: false },
+  scrollProgress: { type: Number, default: 0 },
 })
 
 const canvasEl = ref(null)
@@ -14,8 +19,24 @@ let running = false
 let inView = true
 let io = null
 let cleanup = null
+let galaxy = null
+
+defineExpose({
+  startFlight: (node, duration) => galaxy?.startFlight(node, duration),
+  sampleNodeSparks: node => galaxy?.sampleNodeSparks(node) ?? [],
+  resetFlight: () => galaxy?.resetFlight(),
+})
+
+watch([() => props.activeNode, () => props.regionHovered], () => {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) galaxy?.refresh()
+})
 
 onMounted(() => {
+  if (props.nodes) {
+    galaxy = mountGalaxy(canvasEl.value, props)
+    cleanup = () => galaxy?.dispose()
+    return
+  }
   if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
   const canvas = canvasEl.value
@@ -168,5 +189,5 @@ onBeforeUnmount(() => cleanup?.())
 </script>
 
 <template>
-  <canvas ref="canvasEl" class="particle-field" aria-hidden="true" />
+  <canvas ref="canvasEl" class="particle-field" :class="{ 'particle-field--galaxy': nodes }" aria-hidden="true" />
 </template>

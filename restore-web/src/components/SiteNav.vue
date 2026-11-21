@@ -2,18 +2,12 @@
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { session } from '../store/session'
+import { siteLinks as links } from '../router/siteLinks'
 
 const route = useRoute()
 const router = useRouter()
 const scrolled = ref(false)
 const drawerOpen = ref(false)
-
-const links = [
-  { label: '生态', to: { path: '/', hash: '#eco' } },
-  { label: '技术底座', to: { path: '/', hash: '#foundation' } },
-  { label: '服务', to: { name: 'site-services' } },
-  { label: '关于', to: { name: 'site-about' } },
-]
 
 const isHome = computed(() => route.name === 'site-home')
 
@@ -45,7 +39,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
         <span class="site-nav__brand-en">Mirror</span>
       </RouterLink>
 
-      <nav class="site-nav__links" aria-label="站内导航">
+      <nav v-if="!isHome" class="site-nav__links" aria-label="站内导航">
         <button v-for="l in links" :key="l.label" type="button" class="site-nav__link" @click="go(l)">
           {{ l.label }}
         </button>
@@ -97,3 +91,9 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
     </Transition>
   </header>
 </template>
+
+<style scoped>
+.site-nav__brand + .site-nav__actions {
+  margin-left: auto;
+}
+</style>
