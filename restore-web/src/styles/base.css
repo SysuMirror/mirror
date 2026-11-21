@@ -2191,11 +2191,6 @@ body {
   z-index:-1;
   pointer-events:none
 }
-@media(prefers-reduced-motion:reduce) {
-  .particle-field {
-    display:none
-  }
-}
 
 /* ===== LoginView ===== */
 .login-page {
