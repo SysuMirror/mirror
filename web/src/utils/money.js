@@ -7,7 +7,6 @@ import rules from '../../../contracts/money-rules.json'
  */
 export const MONEY_MIN = rules.min
 export const MONEY_MAX = rules.max
-export const MONEY_DECIMALS = rules.maxDecimalPlaces
 export const MONEY_LABELS = rules.labels
 export const MONEY_RANGE_ORDER = rules.messages.rangeOrder
 

@@ -8,7 +8,6 @@ import rules from '../../../contracts/note-rules.json'
  */
 export const NOTE_MAX_LENGTH = rules.maxLength
 export const NOTE_MAX_PER_POST = rules.maxPerPost
-export const NOTE_MESSAGES = rules.messages
 
 const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g
 
