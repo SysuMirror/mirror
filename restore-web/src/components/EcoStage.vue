@@ -132,58 +132,81 @@ function buildScene() {
   const sizes = new Float32Array(N)
   const clusters = new Float32Array(N)
   const seeds = new Float32Array(N)
+  const fogs = new Float32Array(N)
 
   const centers = CLUSTER_ANGLES.map(a => new THREE.Vector3(Math.sin(a) * CLUSTER_R, 0, Math.cos(a) * CLUSTER_R))
+  const palette = [
+    new THREE.Color('#9ec5ff'),
+    new THREE.Color('#7fd4ff'),
+    new THREE.Color('#e8f1ff'),
+    new THREE.Color('#a8c8f8'),
+  ]
+  const bridgeColor = new THREE.Color('#7eaaff')
 
-  // 白色星空（视频 BARE 第一个星空：纯白小星点，顶部一条密集银河带）
-  const N_BAND = Math.round(N * 0.25)      // 顶部密集星带（挂在相机上，屏幕固定）
-  const N_CLUSTER = Math.round(N * 0.6)    // 三个星团
-  const N_SPARSE = N - N_BAND - N_CLUSTER  // 稀疏星野 + 桥接
+  const N_FOG = Math.round(N * 0.08)
+  const N_BRIDGE = Math.round(N * 0.02)
+  const N_MAIN = N - N_FOG - N_BRIDGE
 
   let k = 0
-  function setStar(x, y, z, sizeMin, sizeMax, cluster) {
-    pos[k * 3] = x
-    pos[k * 3 + 1] = y
-    pos[k * 3 + 2] = z
-    const c = 0.7 + Math.random() * 0.3
-    col[k * 3] = c
-    col[k * 3 + 1] = c
-    col[k * 3 + 2] = c
-    sizes[k] = sizeMin + Math.random() * (sizeMax - sizeMin)
-    clusters[k] = cluster
-    seeds[k] = Math.random()
-    k++
-  }
 
-  // 1) 三个星团：高斯球状白色星群
-  for (let i = 0; i < N_CLUSTER; i++) {
+  // 主粒子：3 个高斯球状星团
+  for (let i = 0; i < N_MAIN; i++) {
     const c = centers[i % 3]
     let dx = gauss(), dy = gauss(), dz = gauss()
     const len = Math.hypot(dx, dy, dz) || 1
     dx /= len; dy /= len; dz /= len
     const r = CLUSTER_BALL_R * Math.pow(Math.random(), 0.45)
-    setStar(c.x + dx * r, c.y + dy * r, c.z + dz * r, 1.0, 2.2, i % 3)
+    pos[k * 3] = c.x + dx * r
+    pos[k * 3 + 1] = c.y + dy * r
+    pos[k * 3 + 2] = c.z + dz * r
+    const pc = palette[(Math.random() * palette.length) | 0]
+    col[k * 3] = pc.r; col[k * 3 + 1] = pc.g; col[k * 3 + 2] = pc.b
+    sizes[k] = 1.0 + Math.random() * 1.3
+    clusters[k] = i % 3
+    seeds[k] = Math.random()
+    fogs[k] = 0
+    k++
   }
 
-  // 2) 稀疏星野，其中每 20 颗放一颗桥接粒子（簇值 0.5/1.5，切换过渡时点亮）
-  for (let i = 0; i < N_SPARSE; i++) {
-    if (i % 20 === 0) {
-      const pair = i % 2
-      const a = centers[pair]
-      const b = centers[pair + 1]
-      const t = Math.random()
-      setStar(
-        a.x + (b.x - a.x) * t + (Math.random() - 0.5) * 0.05,
-        a.y + (b.y - a.y) * t + (Math.random() - 0.5) * 0.05,
-        a.z + (b.z - a.z) * t + (Math.random() - 0.5) * 0.05,
-        0.9, 1.5, pair + 0.5,
-      )
-    } else {
-      const x = (Math.random() - 0.5) * 5
-      const y = -1.2 + Math.random() * 2.6
-      const z = -2.5 + Math.random() * 3
-      setStar(x, y, z, 0.7, 1.4, -1)
-    }
+  // 雾点：8%，size 28–60、alpha 0.02，撒在星团外围
+  for (let i = 0; i < N_FOG; i++) {
+    const c = centers[i % 3]
+    let dx = gauss(), dy = gauss(), dz = gauss()
+    const len = Math.hypot(dx, dy, dz) || 1
+    dx /= len; dy /= len; dz /= len
+    const r = CLUSTER_BALL_R * (0.7 + Math.random() * 1.4)
+    pos[k * 3] = c.x + dx * r
+    pos[k * 3 + 1] = c.y + dy * r
+    pos[k * 3 + 2] = c.z + dz * r
+    const pc = palette[(Math.random() * palette.length) | 0]
+    col[k * 3] = pc.r; col[k * 3 + 1] = pc.g; col[k * 3 + 2] = pc.b
+    sizes[k] = 28 + Math.random() * 32
+    clusters[k] = i % 3
+    seeds[k] = Math.random()
+    fogs[k] = 1
+    k++
+  }
+
+  // 桥接粒子：星团之间稀疏连线，暗示同一星系；cluster 取 0.5/1.5，切换时点亮
+  for (let i = 0; i < N_BRIDGE; i++) {
+    const pair = i % 2
+    const a = centers[pair]
+    const b = centers[pair + 1]
+    const t = Math.random()
+    const jx = (Math.random() - 0.5) * 0.05
+    const jy = (Math.random() - 0.5) * 0.05
+    const jz = (Math.random() - 0.5) * 0.05
+    pos[k * 3] = a.x + (b.x - a.x) * t + jx
+    pos[k * 3 + 1] = a.y + (b.y - a.y) * t + jy
+    pos[k * 3 + 2] = a.z + (b.z - a.z) * t + jz
+    col[k * 3] = bridgeColor.r * 0.6
+    col[k * 3 + 1] = bridgeColor.g * 0.6
+    col[k * 3 + 2] = bridgeColor.b * 0.6
+    sizes[k] = 0.9 + Math.random() * 0.8
+    clusters[k] = pair + 0.5
+    seeds[k] = Math.random()
+    fogs[k] = 0
+    k++
   }
 
   const geo = new THREE.BufferGeometry()
@@ -192,6 +215,7 @@ function buildScene() {
   geo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1))
   geo.setAttribute('aCluster', new THREE.BufferAttribute(clusters, 1))
   geo.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 1))
+  geo.setAttribute('aFog', new THREE.BufferAttribute(fogs, 1))
 
   const mat = new THREE.ShaderMaterial({
     transparent: true,
@@ -203,6 +227,7 @@ function buildScene() {
       attribute float aSize;
       attribute float aCluster;
       attribute float aSeed;
+      attribute float aFog;
       uniform float uTime;
       uniform float uActive;
       uniform float uMix;
@@ -213,14 +238,15 @@ function buildScene() {
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
         float dd = abs(aCluster - uActive);
         float on = 1.0 - clamp(dd, 0.0, 1.0);
-        // 白色星空：当前星团亮度×1.8、size×1.3；非当前×0.28；星带/星野（簇<0）恒定亮度
-        float isStatic = step(aCluster, -0.5);
-        float boost = mix(0.28 + 1.52 * on, 1.0, isStatic);
-        vColor = aColor * boost;
-        float sizePx = aSize * uPixelRatio * (2.6 / max(0.3, -mv.z));
-        sizePx *= mix(1.0 + 0.3 * on, 1.0, isStatic) * (1.0 + 0.05 * sin(uMix * 3.14159));
+        vec3 purple = vec3(0.659, 0.333, 0.969); /* #a855f7 */
+        float gray = dot(aColor, vec3(0.299, 0.587, 0.114));
+        vec3 desat = mix(aColor, vec3(gray), 0.55 * (1.0 - on));
+        vec3 col = mix(desat, purple, on * 0.8);
+        vColor = col * (0.28 + 1.52 * on);
+        float sizePx = aSize * uPixelRatio * (2.0 / max(0.3, -mv.z));
+        sizePx *= (1.0 + 0.3 * on) * (1.0 + 0.06 * sin(uMix * 3.14159));
         gl_PointSize = sizePx;
-        vAlpha = 0.8 + 0.1 * sin(uTime * 1.2 + aSeed * 6.2831);
+        vAlpha = aFog > 0.5 ? 0.02 : (0.72 + 0.18 * sin(uTime * 1.6 + aSeed * 6.2831));
         gl_Position = projectionMatrix * mv;
       }
     `,
@@ -239,35 +265,6 @@ function buildScene() {
 
   pointsObj = new THREE.Points(geo, mat)
   scene.add(pointsObj)
-
-  // 顶部密集星带（银河带）：挂在相机上，屏幕位置固定，像视频里一样静止在顶部
-  const bandGeo = new THREE.BufferGeometry()
-  const bpos = new Float32Array(N_BAND * 3)
-  const bcol = new Float32Array(N_BAND * 3)
-  const bsize = new Float32Array(N_BAND)
-  const bcluster = new Float32Array(N_BAND)
-  const bseed = new Float32Array(N_BAND)
-  for (let i = 0; i < N_BAND; i++) {
-    const d = 2.0 + Math.random() * 1.2
-    const v = ((22.5 + Math.random() * 2.5) * Math.PI) / 180  // 视轴上方 22.5°-25°，窄带
-    const h = ((-32 + Math.random() * 64) * Math.PI) / 180    // 水平 ±32°
-    bpos[i * 3] = Math.tan(h) * d
-    bpos[i * 3 + 1] = Math.tan(v) * d
-    bpos[i * 3 + 2] = -d
-    const c = 0.7 + Math.random() * 0.3
-    bcol[i * 3] = c
-    bcol[i * 3 + 1] = c
-    bcol[i * 3 + 2] = c
-    bsize[i] = 1.0 + Math.random() * 1.0
-    bcluster[i] = -1
-    bseed[i] = Math.random()
-  }
-  bandGeo.setAttribute('position', new THREE.BufferAttribute(bpos, 3))
-  bandGeo.setAttribute('aColor', new THREE.BufferAttribute(bcol, 3))
-  bandGeo.setAttribute('aSize', new THREE.BufferAttribute(bsize, 1))
-  bandGeo.setAttribute('aCluster', new THREE.BufferAttribute(bcluster, 1))
-  bandGeo.setAttribute('aSeed', new THREE.BufferAttribute(bseed, 1))
-  camera.add(new THREE.Points(bandGeo, mat))
 }
 
 function buildRenderer() {
@@ -278,7 +275,6 @@ function buildRenderer() {
   camera.position.set(0, 0.55, 2.2)
   camera.rotation.y = 0
   scene = new THREE.Scene()
-  scene.add(camera) // 星带挂在相机上，需要相机在场景图中
   buildScene()
   resizeRenderer()
 }
@@ -355,7 +351,7 @@ function loop(now) {
   if (frameTimes.length >= 30) {
     const avg = (now - frameTimes[0]) / (frameTimes.length - 1)
     if (avg > 20) {
-      dprTarget = Math.max(1.0, dprTarget - 0.25)
+      dprTarget = Math.max(0.75, dprTarget - 0.25)
       renderer.setPixelRatio(dprTarget)
       resizeRenderer()
     }
