@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import ParticleField from '../components/ParticleField.vue'
 import ServiceList from '../components/ServiceList.vue'
+import { navLinks } from '../components/SiteNav.vue'
 
 const marketHome = '/assets/market-home.webp'
 const marketWorkbench = '/assets/market-workbench.webp'
@@ -55,6 +57,36 @@ const counter = computed(
 const reducedMotion =
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+/* ---------- hero tab：跟随鼠标 3D 倾斜（不同景深视差） ---------- */
+const router = useRouter()
+const heroEl = ref(null)
+const tabsEl = ref(null)
+const tabDepths = [0.6, 1.2, 1.8, 2.4]
+
+function onHeroPointer(e) {
+  if (reducedMotion || !tabsEl.value || !heroEl.value) return
+  const r = heroEl.value.getBoundingClientRect()
+  const mx = ((e.clientX - r.left) / r.width) * 2 - 1
+  const my = ((e.clientY - r.top) / r.height) * 2 - 1
+  tabsEl.value.style.setProperty('--mx', mx.toFixed(3))
+  tabsEl.value.style.setProperty('--my', my.toFixed(3))
+}
+function onHeroLeave() {
+  if (!tabsEl.value) return
+  tabsEl.value.style.setProperty('--mx', '0')
+  tabsEl.value.style.setProperty('--my', '0')
+}
+onMounted(() => {
+  if (typeof window.PointerEvent === 'function' && heroEl.value) {
+    heroEl.value.addEventListener('pointermove', onHeroPointer, { passive: true })
+    heroEl.value.addEventListener('pointerleave', onHeroLeave)
+  }
+})
+onBeforeUnmount(() => {
+  heroEl.value?.removeEventListener('pointermove', onHeroPointer)
+  heroEl.value?.removeEventListener('pointerleave', onHeroLeave)
+})
 
 function goTo(n) {
   idx.value = ((n % slides.length) + slides.length) % slides.length
@@ -113,7 +145,7 @@ const capabilities = [
 <template>
   <div class="site-page">
     <!-- 门户首屏 -->
-    <section class="hero">
+    <section class="hero" ref="heroEl">
       <div class="hero-grid" aria-hidden="true"></div>
       <ParticleField />
       <div class="site-shell">
@@ -140,7 +172,19 @@ const capabilities = [
         <div class="hero-actions hero-in hero-in--4">
           <RouterLink class="btn-hero btn-hero--primary" :to="{ name: 'home' }">进入需求广场</RouterLink>
           <RouterLink class="btn-hero btn-hero--ghost" :to="{ name: 'site-services' }">了解技术服务</RouterLink>
+          <RouterLink class="btn-hero btn-hero--ghost" :to="{ name: 'login' }">登录</RouterLink>
         </div>
+
+        <nav ref="tabsEl" class="hero-tabs hero-in hero-in--4" aria-label="站内导航">
+          <button
+            v-for="(l, i) in navLinks"
+            :key="l.label"
+            type="button"
+            class="hero-tab"
+            :style="{ '--depth': tabDepths[i] }"
+            @click="router.push(l.to)"
+          >{{ l.label }}</button>
+        </nav>
       </div>
     </section>
 
@@ -298,3 +342,68 @@ const capabilities = [
     </section>
   </div>
 </template>
+
+<style scoped>
+/* hero 导航胶囊：漂浮在星群里，随鼠标 3D 视差倾斜，悬停发光 */
+.hero-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+.hero-tab {
+  --depth: 1;
+  padding: 9px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(126, 170, 255, 0.2);
+  background: rgba(16, 28, 48, 0.5);
+  color: rgba(200, 216, 242, 0.78);
+  font-family: var(--site-font);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transform:
+    translate3d(
+      calc(var(--mx, 0) * var(--depth) * 12px),
+      calc(var(--my, 0) * var(--depth) * 7px),
+      0
+    )
+    rotateY(calc(var(--mx, 0) * 3deg))
+    rotateX(calc(var(--my, 0) * -3deg));
+  transition:
+    transform 0.35s var(--site-ease),
+    color 0.25s var(--site-ease),
+    border-color 0.25s var(--site-ease),
+    background-color 0.25s var(--site-ease),
+    box-shadow 0.35s var(--site-ease),
+    text-shadow 0.25s var(--site-ease);
+  will-change: transform;
+}
+
+.hero-tab:hover,
+.hero-tab:focus-visible {
+  color: #fff;
+  border-color: rgba(76, 195, 255, 0.6);
+  background: rgba(76, 195, 255, 0.12);
+  box-shadow:
+    0 0 20px rgba(76, 195, 255, 0.45),
+    inset 0 0 14px rgba(76, 195, 255, 0.18);
+  text-shadow: 0 0 14px rgba(76, 195, 255, 0.95);
+  outline: none;
+}
+
+@media (max-width: 640px) {
+  .hero-tab {
+    padding: 8px 15px;
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-tab {
+    transform: none;
+    transition: none;
+  }
+}
+</style>

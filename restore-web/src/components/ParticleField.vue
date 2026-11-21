@@ -44,8 +44,8 @@ onMounted(() => {
         y: Math.random() * h,
         vx: (Math.random() - 0.5) * 0.24,
         vy: (Math.random() - 0.5) * 0.24,
-        r: Math.random() * 1.4 + 0.6,
-        accent: Math.random() < 0.16,
+        r: Math.random() * 1.8 + 0.9,
+        accent: Math.random() < 0.22,
       })
     }
     dots.length = want
@@ -81,7 +81,7 @@ onMounted(() => {
         const b = dots[j]
         const dist = Math.hypot(a.x - b.x, a.y - b.y)
         if (dist < linkDist) {
-          const alpha = (1 - dist / linkDist) * 0.2
+          const alpha = (1 - dist / linkDist) * 0.3
           ctx.strokeStyle = `rgba(126, 170, 255, ${alpha})`
           ctx.beginPath()
           ctx.moveTo(a.x, a.y)
@@ -95,7 +95,7 @@ onMounted(() => {
       for (const d of dots) {
         const dist = Math.hypot(d.x - mouse.x, d.y - mouse.y)
         if (dist < mouseDist) {
-          const alpha = (1 - dist / mouseDist) * 0.32
+          const alpha = (1 - dist / mouseDist) * 0.42
           ctx.strokeStyle = `rgba(76, 195, 255, ${alpha})`
           ctx.beginPath()
           ctx.moveTo(d.x, d.y)
@@ -106,7 +106,7 @@ onMounted(() => {
     }
 
     for (const d of dots) {
-      ctx.fillStyle = d.accent ? 'rgba(127, 212, 255, 0.85)' : 'rgba(158, 197, 255, 0.55)'
+      ctx.fillStyle = d.accent ? 'rgba(127, 212, 255, 0.95)' : 'rgba(158, 197, 255, 0.75)'
       ctx.beginPath()
       ctx.arc(d.x, d.y, d.accent ? d.r + 0.7 : d.r, 0, Math.PI * 2)
       ctx.fill()
