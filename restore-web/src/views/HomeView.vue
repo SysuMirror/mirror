@@ -2,7 +2,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import ParticleField from '../components/ParticleField.vue'
-import EcoCarousel from '../components/EcoCarousel.vue'
+import EcoStage from '../components/EcoStage.vue'
 import ServiceList from '../components/ServiceList.vue'
 import { navLinks } from '../components/SiteNav.vue'
 
@@ -128,27 +128,8 @@ const capabilities = [
       </div>
     </section>
 
-    <!-- 生态 -->
-    <section id="eco" class="site-section">
-      <div class="site-shell">
-        <header class="site-section__head" v-reveal>
-          <h2 class="site-section__title">一套长出来的生态</h2>
-          <p class="site-section__lead">
-            集市主站、知识库、云平台与安全监测在同一底座上协同运行——它们不是拼装的开源方案， 而是团队从零构建、持续迭代的自研体系。
-          </p>
-        </header>
-
-        <div v-reveal="80">
-          <EcoCarousel @update:active="sector = $event" />
-        </div>
-
-        <div v-reveal="140">
-          <figure class="threat">
-            <img ref="threatEl" :src="threatMap" alt="平台实时攻防态势监测大屏" loading="lazy" decoding="async" />
-          </figure>
-        </div>
-      </div>
-    </section>
+    <!-- 生态：全屏 sticky 3D 场景，板块切换驱动场景/镜头变换 -->
+    <EcoStage @update:active="sector = $event" />
 
     <!-- 技术底座 -->
     <section id="foundation" class="site-section" style="background:var(--paper-2)">
@@ -202,6 +183,17 @@ const capabilities = [
           <div class="hero-actions" style="margin-top:32px">
             <RouterLink class="btn-hero btn-hero--primary" :to="{ name: 'site-about' }">关于我们</RouterLink>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 攻防态势（自生态段迁来） -->
+    <section class="site-section">
+      <div class="site-shell">
+        <div v-reveal="140">
+          <figure class="threat">
+            <img ref="threatEl" :src="threatMap" alt="平台实时攻防态势监测大屏" loading="lazy" decoding="async" />
+          </figure>
         </div>
       </div>
     </section>

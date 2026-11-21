@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { guest: true } },
@@ -15,8 +15,13 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   routes,
+  // 与原版一致：导航带 hash 时滚动到对应锚点（如 /#eco）
+  scrollBehavior(to) {
+    if (to.hash) return { el: to.hash }
+    return { top: 0 }
+  },
 })
 
 export default router
