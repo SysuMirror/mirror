@@ -1,0 +1,13 @@
+{
+  "name": "mirror-community",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "沕鉴·Mirror 校园需求社区——Node 22 标准库后端（node:http + node:sqlite）",
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server.js"
+  },
+  "engines": {
+    "node": ">=22.5"
+  }
+}

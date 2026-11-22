@@ -1,12 +1,2849 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>沕鉴·Mirror</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<head>
+<meta charset="utf-8">
+<script>
+/* 诊断哨兵：最先执行，捕获后续所有脚本错误与渲染状态，回传 /api/debug 并可选浮层显示。 */
+(function(){
+  var D=window.__mirrorDebug={errors:[],marks:[]};
+  function send(extra){
+    try{
+      fetch('/api/debug',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,
+        body:JSON.stringify({errors:D.errors.slice(0,8),marks:D.marks.slice(0,24),extra:extra||null,url:location.href,scrollY:window.pageYOffset})}).catch(function(){});
+    }catch(e){}
+  }
+  function paint(){
+    if(!D.errors.length&&location.search.indexOf('debug')<0)return;
+    var el=document.getElementById('mirrorDebugPanel');
+    if(!el){el=document.createElement('div');el.id='mirrorDebugPanel';
+      el.style.cssText='position:fixed;left:8px;top:70px;z-index:99999;max-width:92vw;max-height:60vh;overflow:auto;background:#200;color:#fdd;font:12px/1.5 monospace;padding:10px;border:1px solid #f66;white-space:pre-wrap';
+      document.body.appendChild(el);}
+    el.textContent='MIRROR DEBUG\n'+D.errors.map(function(e){return e.msg+' @'+(e.src||'')+':'+(e.line||'')+'\n'+String(e.stack||'').split('\n').slice(0,3).join('\n');}).join('\n---\n');
+  }
+  window.addEventListener('error',function(e){
+    D.errors.push({msg:String(e.message||(e.error&&e.error.message)||'error'),src:e.filename,line:e.lineno,stack:e.error&&e.error.stack});
+    paint();send({phase:'error'});
+  },true);
+  window.addEventListener('unhandledrejection',function(e){
+    D.errors.push({msg:'unhandledrejection: '+String((e.reason&&e.reason.message)||e.reason),stack:e.reason&&e.reason.stack});
+    paint();send({phase:'rejection'});
+  });
+  function snap(phase){
+    var f=document.querySelector('.hm-hero__frame'),c=document.querySelector('.hm-hero__mirror'),h=document.querySelector('.hm-hero');
+    var r=f?f.getBoundingClientRect():null,cs=f?getComputedStyle(f):null;
+    D.marks.push({phase:phase,
+      frame:r?{w:Math.round(r.width),h:Math.round(r.height),top:Math.round(r.top)}:null,
+      frameBg:cs?cs.backgroundColor:null,frameDisplay:cs?cs.display:null,
+      canvas:!!c,canvasSize:c?{w:c.width,h:c.height}:null,
+      heroH:h?Math.round(h.getBoundingClientRect().height):null,
+      star:document.querySelectorAll('.hm-star').length,
+      fx:document.querySelectorAll('.hm-fx-field').length,
+      fxLoaded:!!window.__mirrorFxLoaded,
+      bodyBg:getComputedStyle(document.body).backgroundColor,
+      navClass:(document.querySelector('.hm-nav')||{}).className,
+      center:(function(){if(typeof document.elementFromPoint!=='function')return null;var el=document.elementFromPoint(Math.round(innerWidth/2),Math.round(innerHeight/2));
+        if(!el)return null;var s=getComputedStyle(el);
+        return {tag:el.tagName,cls:String(el.className).slice(0,60),bg:s.backgroundColor,z:s.zIndex,pos:s.position};})(),
+      sheets:(function(){try{return Array.prototype.map.call(document.styleSheets,function(s){try{return (s.href||'inline')+':'+s.cssRules.length}catch(e){return (s.href||'inline')+':BLOCKED'}})}catch(e){return null}})()});
+  }
+  document.addEventListener('DOMContentLoaded',function(){snap('dom');send({phase:'dom'});});
+  window.addEventListener('load',function(){setTimeout(function(){snap('load+1200');send({phase:'load'});paint();},1200);});
+  setTimeout(function(){snap('t+2500');send({phase:'t2500'});paint();},2500);
+  window.__mirrorDebugSend=send;window.__mirrorDebugSnap=snap;
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta name="theme-color" content="#ffffff">
+<meta name="description" content="沕鉴·Mirror 校园技术服务平台——把技术，做进校园的真实场景。">
+<title>沕鉴·Mirror — 把技术，做进校园的真实场景</title>
+<style>
+  :root {
+    --font: -apple-system, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", system-ui, sans-serif;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: #fff;
+    color: #0b0b0b;
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .skip { position: absolute; left: -9999px; }
+  .skip:focus { left: 16px; top: 16px; z-index: 99; padding: 8px 12px; border-radius: 2px; background: #fff; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+<style>
+/* 沕鉴·Mirror 品牌首页 —— 腾讯官网式版式 + 原站产品截图
+   所有选择器都收在 .hm 命名空间里，不写 html / body / * 全局选择器。 */
+
+.hm {
+  --hm-brand: #2f6bff;
+  --hm-brand-deep: #1f4fd0;
+  --hm-ink: #0b0b0b;
+  --hm-ink-2: #5f6368;
+  --hm-ink-3: #8a919c;
+  --hm-paper: #ffffff;
+  --hm-line: #e6e9ef;
+  --hm-dark: #0b1424;
+  --hm-radius: 3px;
+  --hm-gutter: clamp(16px, 3.4vw, 34px);
+  --hm-nav-h: 64px;
+  --hm-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  min-height: 100vh;
+  background: var(--hm-paper);
+  color: var(--hm-ink);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.hm * { box-sizing: border-box; }
+.hm-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.hm img { display: block; max-width: 100%; }
+.hm a { color: inherit; text-decoration: none; }
+.hm :where(button) { font: inherit; color: inherit; }
+.hm h1, .hm h2, .hm h3, .hm p { margin: 0; }
+.hm section[id], .hm footer[id] { scroll-margin-top: calc(var(--hm-nav-h) + 12px); }
+
+.hm-container { max-width: 1320px; margin: 0 auto; padding: 0 var(--hm-gutter); }
+
+/* ---------------- 顶栏 ---------------- */
+.hm-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  --nav-fg: #ffffff;
+  --nav-fg2: rgba(255, 255, 255, 0.64);
+  --nav-line: rgba(255, 255, 255, 0.2);
+  --nav-accent: #ffffff;
+  color: var(--nav-fg);
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+  transition: background-color 0.35s var(--hm-ease), border-color 0.35s var(--hm-ease), box-shadow 0.35s var(--hm-ease), transform 0.4s var(--hm-ease), opacity 0.3s ease;
+}
+.hm-nav.is-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+.hm-nav.is-solid {
+  --nav-fg: var(--hm-ink);
+  --nav-fg2: #6b7280;
+  --nav-line: var(--hm-line);
+  --nav-accent: var(--hm-brand);
+  text-shadow: none;
+  background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom-color: var(--hm-line);
+  box-shadow: 0 10px 30px rgba(15, 30, 60, 0.06);
+}
+.hm-nav__inner {
+  height: var(--hm-nav-h);
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 var(--hm-gutter);
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.hm-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--nav-fg);
+}
+.hm-logo em {
+  font-style: normal;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--nav-fg2);
+}
+.hm-nav__links {
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 2.4vw, 38px);
+  margin-left: auto;
+  font-size: 15px;
+  font-weight: 500;
+}
+.hm-nav__links button {
+  color: var(--nav-fg);
+  position: relative;
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.hm-nav__links button::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 2px;
+  background: var(--nav-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s var(--hm-ease);
+}
+.hm-nav__links button:hover::after,
+.hm-nav__links button:focus-visible::after { transform: scaleX(1); }
+.hm-nav__actions { display: flex; align-items: center; gap: 18px; margin-left: 6px; }
+.hm-login {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--nav-fg2);
+  cursor: pointer;
+}
+.hm-login:hover { color: var(--nav-fg); }
+.hm-logo, .hm-logo em, .hm-nav__links button, .hm-login { transition: color 0.35s var(--hm-ease); }
+.hm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--hm-brand);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.hm-btn:hover { background: var(--hm-brand-deep); transform: translateY(-1px); }
+.hm-btn--lg { height: 48px; padding: 0 26px; font-size: 15px; }
+.hm-nav__toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+}
+.hm-nav__toggle span {
+  position: relative;
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--nav-fg);
+  transition: background 0.35s var(--hm-ease);
+}
+.hm-nav__toggle span::before,
+.hm-nav__toggle span::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--nav-fg);
+  transition: background 0.35s var(--hm-ease);
+}
+.hm-nav__toggle span::before { top: -5px; }
+.hm-nav__toggle span::after { top: 5px; }
+.hm-mobile {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.94);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  color: #fff;
+}
+.hm-mobile button {
+  display: block;
+  width: 100%;
+  padding: 14px var(--hm-gutter);
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: #fff;
+  text-align: left;
+  font-size: 15px;
+  cursor: pointer;
+}
+.hm-mobile button:last-child { border-bottom: 0; }
+.hm-mobile a:not(.hm-btn):not(.hm-login) {
+  display: block;
+  padding: 14px var(--hm-gutter);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 15px;
+  color: #fff;
+}
+.hm-mobile a:not(.hm-btn):not(.hm-login):last-child { border-bottom: 0; }
+.hm-mobile .hm-btn { margin: 16px var(--hm-gutter) 0; }
+.hm-mobile .hm-login { display: block; padding: 14px var(--hm-gutter); border-bottom: 0; color: rgba(255, 255, 255, 0.7); }
+.hm-mobile a:not(.hm-btn):not(.hm-login) {
+  display: block;
+  padding: 14px var(--hm-gutter);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 15px;
+  color: #fff;
+}
+.hm-mobile a:not(.hm-btn):not(.hm-login):last-child { border-bottom: 0; }
+.hm-mobile .hm-btn { margin: 16px var(--hm-gutter) 0; }
+.hm-mobile .hm-login { display: block; padding: 14px var(--hm-gutter); border-bottom: 0; }
+.hm-mobile a:not(.hm-btn):not(.hm-login) {
+  display: block;
+  padding: 14px var(--hm-gutter);
+  border-bottom: 1px solid #f0f2f6;
+  font-size: 15px;
+}
+.hm-mobile a:not(.hm-btn):not(.hm-login):last-child { border-bottom: 0; }
+.hm-mobile .hm-btn { margin: 16px var(--hm-gutter) 0; }
+.hm-mobile .hm-login { display: block; padding: 14px var(--hm-gutter); border-bottom: 0; }
+
+/* ---------------- Hero ---------------- */
+.hm-hero {
+  padding: 0;
+  --hm-hero-pin: 62svh;
+  height: calc(100svh + var(--hm-hero-pin));
+}
+.hm-hero__frame {
+  position: sticky;
+  top: 0;
+  overflow: hidden;
+  height: 100svh;
+  min-height: 520px;
+  border-radius: 0;
+  background: #000;
+  isolation: isolate;
+}
+/* Hero 只保留镜面动画层，旧版图片/文案层已移除 */
+.hm-hero__mirror {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  display: block;
+  background: #000;
+}
+/* ---------------- 通用版块 ---------------- */
+.hm-section { padding: clamp(64px, 8.5vw, 118px) 0; }
+.hm-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  color: var(--hm-ink-3);
+}
+.hm-kicker::before { content: ""; width: 24px; height: 1px; background: currentColor; }
+.hm-sec-head { margin-bottom: clamp(28px, 3.5vw, 44px); }
+.hm-sec-head h2 {
+  font-size: clamp(28px, 3.2vw, 44px);
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.hm-sec-head--split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(24px, 5vw, 72px);
+  align-items: end;
+}
+.hm-sec-lead { max-width: 520px; padding-top: 16px; border-top: 1px solid var(--hm-line); font-size: 15px; line-height: 1.9; color: var(--hm-ink-2); }
+
+/* ---------------- 生态（原站产品轮播） ---------------- */
+.hm-eco__card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  min-height: 560px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--hm-dark);
+  color: #fff;
+  box-shadow: none;
+}
+.hm-eco__visual {
+  position: relative;
+  min-height: 560px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 18% 16%, rgba(47, 107, 255, 0.2), transparent 60%),
+    linear-gradient(140deg, #0a1526, #0d1b31 60%, #0a1424);
+}
+.hm-eco__visual::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(126, 170, 255, 0.06) 0, rgba(126, 170, 255, 0.06) 1px, transparent 1px, transparent 64px),
+    repeating-linear-gradient(90deg, rgba(126, 170, 255, 0.06) 0, rgba(126, 170, 255, 0.06) 1px, transparent 1px, transparent 64px);
+}
+.hm-eco__scene {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.985);
+  transition: opacity 0.5s var(--hm-ease), transform 0.7s var(--hm-ease);
+}
+.hm-eco__scene.is-active { opacity: 1; visibility: visible; transform: none; }
+
+.hm-phone {
+  position: absolute;
+  overflow: hidden;
+  border: 6px solid #1b2536;
+  border-radius: 4px;
+  background: #0b1424;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.34);
+}
+.hm-phone img { width: 100%; height: auto; }
+.hm-phone--back { left: 7%; top: 12%; width: 36%; transform: rotate(-7deg); opacity: 0.72; }
+.hm-phone--front { left: 40%; top: 7%; z-index: 2; width: 43%; transform: rotate(2deg); }
+
+.hm-window {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 88%;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.34);
+  transform: translate(-50%, -50%);
+}
+.hm-window__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  background: #101a2b;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+.hm-window__bar i { width: 7px; height: 7px; border-radius: 50%; background: #3a4a63; }
+.hm-window__bar i:nth-child(1) { background: #ff5f57; }
+.hm-window__bar i:nth-child(2) { background: #febc2e; }
+.hm-window__bar i:nth-child(3) { background: #28c840; }
+.hm-window__bar span { margin-left: 10px; }
+.hm-window img { width: 100%; height: auto; }
+
+.hm-eco__panel {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(24px, 3vw, 44px);
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--hm-dark);
+}
+.hm-eco__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 11.5px;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.5);
+}
+.hm-eco__count { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hm-eco__title {
+  margin: 20px 0 16px;
+  font-size: clamp(24px, 2.2vw, 32px);
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.hm-eco__desc { font-size: 14.5px; line-height: 1.9; color: rgba(255, 255, 255, 0.62); }
+.hm-eco__tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 0; padding: 0; list-style: none; }
+.hm-eco__tags li {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.72);
+}
+.hm-eco__stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 28px; }
+.hm-eco__stats em {
+  display: block;
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.42);
+}
+.hm-eco__stats b { display: block; margin-top: 6px; font-size: 17px; font-weight: 700; color: #fff; }
+.hm-eco__nav { display: flex; gap: 10px; margin-top: auto; padding-top: 28px; }
+.hm-eco__nav button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 2px;
+  background: transparent;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.hm-eco__nav button:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.5); }
+
+/* ---------------- 标语过渡 ---------------- */
+.hm-pitch { padding: clamp(76px, 10vw, 132px) 0 clamp(56px, 7vw, 88px); }
+.hm-pitch h2 {
+  max-width: 1080px;
+  font-size: clamp(30px, 4.1vw, 56px);
+  line-height: 1.26;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.hm-pitch__down { display: flex; margin-top: clamp(28px, 3.4vw, 44px); }
+.hm-pitch__down button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #ccd2dc;
+  border-radius: 2px;
+  background: #fff;
+  color: var(--hm-ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.3s var(--hm-ease), border-color 0.3s ease, background 0.3s ease;
+}
+.hm-pitch__down button:hover { transform: translateY(3px); border-color: var(--hm-ink); background: #f5f7fb; }
+.hm-pitch__down svg { width: 18px; height: 18px; }
+/* ---------------- 沉浸式全屏 ---------------- */
+.hm-immersive { position: relative; height: 240vh; background: #000; color: #fff; }
+.hm-immersive__pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  align-content: end;
+  justify-items: start;
+  padding-bottom: clamp(56px, 9vh, 104px);
+}
+.hm-immersive__media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 3px;
+  transform: scale(0.78);
+  will-change: transform;
+}
+.hm-immersive__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  filter: saturate(0.9) contrast(1.04) brightness(1.02);
+  transform: scale(1.02);
+  will-change: transform;
+}
+.hm-immersive__tone {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(6, 12, 26, 0) 38%, rgba(6, 12, 26, 0.34) 100%);
+}
+.hm-immersive__shade {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(58% 62% at 50% 50%, rgba(2, 6, 16, 0.55), rgba(2, 6, 16, 0.12) 70%, rgba(2, 6, 16, 0)),
+    linear-gradient(0deg, rgba(2, 6, 16, 0.88), rgba(2, 6, 16, 0.34) 46%, rgba(2, 6, 16, 0.1) 72%);
+}
+.hm-immersive__copy {
+  position: relative;
+  z-index: 2;
+  width: min(92%, 760px);
+  margin-left: var(--hm-gutter);
+  text-align: left;
+  opacity: 0;
+  transform: translate3d(0, 36px, 0);
+  will-change: opacity, transform;
+}
+.hm-immersive__kicker { font-size: 12.5px; letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.65); }
+.hm-immersive__title {
+  margin: 16px 0 18px;
+  font-size: clamp(34px, 4.6vw, 66px);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 4px 40px rgba(0, 0, 0, 0.45);
+}
+.hm-immersive__sub {
+  max-width: 520px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.9;
+  color: rgba(255, 255, 255, 0.74);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+}
+
+/* ---------------- 三块基石（争着往上跑） ---------------- */
+.hm-rise { background: #f7f9fc; }
+.hm-rise__grid {
+  display: grid;
+  grid-template-columns: 0.82fr 1.1fr 1.1fr;
+  gap: clamp(16px, 2vw, 28px);
+  align-items: end;
+  margin-top: clamp(24px, 3vw, 40px);
+}
+.hm-rise__card {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+  opacity: 0.12;
+  transform: translate3d(0, 140px, 0);
+  will-change: transform, opacity;
+}
+.hm-rise__card:nth-child(2) { margin-top: clamp(32px, 5vw, 72px); }
+.hm-rise__card:nth-child(3) { margin-top: clamp(64px, 9vw, 144px); }
+.hm-rise__media {
+  overflow: hidden;
+  border-radius: 3px;
+  background: #0b1424;
+  box-shadow: none;
+}
+.hm-rise__media img { width: 100%; height: 100%; object-fit: cover; }
+.hm-rise__card--phone .hm-rise__media {
+  aspect-ratio: 2 / 3;
+  border: 6px solid #1b2536;
+  border-radius: 4px;
+}
+.hm-rise__card--panel .hm-rise__media { aspect-ratio: 16 / 9; }
+.hm-rise__cap {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--hm-ink-2);
+}
+.hm-rise__cap b { font-size: 15px; font-weight: 700; color: var(--hm-ink); }
+
+/* ---------------- 横向漫游 ---------------- */
+.hm-gallery { position: relative; height: 500vh; background: #04070d; color: #fff; }
+.hm-gallery__pin {
+  position: sticky;
+  top: var(--hm-nav-h);
+  height: calc(100vh - var(--hm-nav-h));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.hm-gallery__head { flex: none; padding: clamp(24px, 4vw, 44px) var(--hm-gutter) 0; }
+.hm-gallery__head .hm-kicker { color: rgba(255, 255, 255, 0.5); }
+.hm-gallery__head h2 {
+  font-size: clamp(26px, 3vw, 38px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.hm-gallery__stage { flex: 1; position: relative; margin: clamp(16px, 3vw, 28px) var(--hm-gutter) 0; }
+.hm-slide {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  transform: scale(0.86);
+  border-radius: 10px;
+  overflow: hidden;
+  will-change: transform, opacity;
+}
+.hm-slide img { width: 100%; height: 100%; object-fit: cover; }
+.hm-slide figcaption { position: absolute; left: 24px; right: 24px; bottom: 24px; z-index: 2; opacity: 0; transform: translate3d(0, 18px, 0); }
+.hm-slide__tag { display: block; font-size: 12px; color: rgba(255, 255, 255, 0.62); margin-bottom: 8px; }
+.hm-slide__title { display: block; font-size: clamp(20px, 2.2vw, 30px); font-weight: 700; line-height: 1.3; }
+.hm-slide::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.62), transparent 55%);
+}
+.hm-gallery__dots { flex: none; display: flex; gap: 8px; justify-content: center; padding: 20px var(--hm-gutter) 26px; }
+.hm-gallery__dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.25); transition: all 0.3s; }
+.hm-gallery__dots i.is-on { width: 20px; border-radius: 3px; background: #fff; }
+
+/* ---------------- 技术底座 ---------------- */
+.hm-foundation__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr);
+  gap: clamp(28px, 4vw, 56px);
+  align-items: start;
+}
+.hm-foundation__figure {
+  margin: 0;
+  padding: clamp(20px, 2.4vw, 28px);
+  border: 0;
+  border-radius: 12px;
+  background: #f4f6f9;
+}
+.hm-foundation__figure img { width: 100%; height: auto; border-radius: 2px; }
+.hm-foundation__figure figcaption {
+  margin-top: 14px;
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  color: #8aa0c4;
+}
+.hm-foundation__features { display: flex; flex-direction: column; }
+.hm-feature { padding: 24px 0; border-top: 1px solid var(--hm-line); }
+.hm-feature:first-child { padding-top: 0; border-top: 0; }
+.hm-feature__sub {
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--hm-brand);
+}
+.hm-feature h3 { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+.hm-feature p:last-child { margin-top: 10px; font-size: 14px; line-height: 1.85; color: var(--hm-ink-2); }
+
+/* ---------------- 服务 ---------------- */
+.hm-service-list { margin-top: clamp(32px, 4vw, 48px); border-top: 1px solid var(--hm-line); }
+.hm-service-row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 0.9fr) minmax(0, 1.4fr);
+  gap: clamp(16px, 3vw, 40px);
+  align-items: start;
+  padding: clamp(24px, 3vw, 34px) 0;
+  border-bottom: 1px solid var(--hm-line);
+}
+.hm-service__num {
+  padding-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--hm-brand);
+}
+.hm-service-row h3 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+.hm-service-row p { max-width: 640px; font-size: 14.5px; line-height: 1.85; color: var(--hm-ink-2); }
+.hm-services__cta { display: flex; justify-content: flex-start; margin-top: clamp(32px, 4vw, 48px); }
+/* ---------------- YatSSO 生态（左右循环） ---------------- */
+.hm-marquee {
+  position: relative;
+  overflow: hidden;
+  margin-top: clamp(24px, 3vw, 40px);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+.hm-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: hm-marquee 42s linear infinite;
+  will-change: transform;
+}
+.hm-marquee__track--reverse {
+  margin-top: 14px;
+  animation-direction: reverse;
+  animation-duration: 48s;
+}
+.hm-marquee:hover .hm-marquee__track { animation-play-state: paused; }
+@keyframes hm-marquee {
+  to { transform: translate3d(-50%, 0, 0); }
+}
+.hm-apps__item {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: clamp(260px, 22vw, 320px);
+  margin-right: 20px;
+  padding: 18px 20px;
+  border: 0;
+  border-radius: 12px;
+  background: #f4f6f9;
+  box-shadow: none;
+  min-width: 0;
+}
+.hm-apps__mark {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--hm-ink);
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  font-weight: 700;
+}
+.hm-apps__logo {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.hm-apps__logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.hm-apps__body { min-width: 0; }
+.hm-apps__name { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; }
+.hm-apps__name em { display: none; }
+.hm-apps__desc { display: block; margin-top: 4px; font-size: 13px; line-height: 1.7; color: var(--hm-ink-2); }
+.hm-apps__item:hover .hm-apps__name { color: var(--hm-brand-deep); }
+.hm-foundation__note {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hm-line);
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--hm-ink-2);
+}
+
+/* ---------------- YatTerra 算力拓扑 ---------------- */
+.hm-topology {
+  padding: clamp(72px, 9vw, 120px) 0;
+  background: #04070d;
+  color: #fff;
+}
+.hm-topology .hm-kicker { color: rgba(255, 255, 255, 0.5); }
+.hm-topology .hm-sec-lead { color: rgba(255, 255, 255, 0.6); }
+.hm-topology__stage {
+  position: relative;
+  aspect-ratio: 1000 / 620;
+  margin-top: clamp(24px, 3vw, 40px);
+  overflow: hidden;
+  border: 1px solid rgba(120, 160, 255, 0.18);
+  border-radius: 3px;
+  background:
+    radial-gradient(60% 60% at 50% 50%, rgba(28, 72, 170, 0.24), transparent 70%),
+    linear-gradient(160deg, #07101f, #050a14 60%, #070d19);
+}
+.hm-topology__stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(120, 160, 255, 0.14) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.5;
+}
+.hm-topology__wires { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hm-topology__lines path {
+  fill: none;
+  stroke: rgba(120, 160, 255, 0.26);
+  stroke-width: 1.2;
+  stroke-dasharray: 5 7;
+  animation: hm-wire 9s linear infinite;
+}
+@keyframes hm-wire {
+  to { stroke-dashoffset: -120; }
+}
+.hm-topology__core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: clamp(140px, 14vw, 190px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, #2f6bff 0%, #102a5c 45%, #071226 72%);
+  box-shadow: 0 0 70px rgba(47, 107, 255, 0.35), inset 0 0 40px rgba(120, 170, 255, 0.25);
+  transform: translate(-50%, -50%);
+}
+.hm-topology__core::after {
+  content: "";
+  position: absolute;
+  inset: 18%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+}
+.hm-topology__orbit {
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 72%, rgba(120, 178, 255, 0.9) 86%, transparent 100%);
+  -webkit-mask: radial-gradient(circle, transparent 56%, #000 58%);
+  mask: radial-gradient(circle, transparent 56%, #000 58%);
+  animation: hm-orbit 9s linear infinite;
+}
+@keyframes hm-orbit {
+  to { transform: rotate(360deg); }
+}
+.hm-topology__core-text { position: relative; z-index: 2; text-align: center; }
+.hm-topology__core-label { display: block; font-size: 18px; font-weight: 800; letter-spacing: 0.04em; }
+.hm-topology__core-sub { display: block; margin-top: 4px; font-size: 10.5px; letter-spacing: 0.2em; color: rgba(255, 255, 255, 0.55); }
+
+.hm-topology__nodes { display: contents; }
+.hm-top-node {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 140px;
+  padding: 10px 12px;
+  border: 1px solid rgba(120, 160, 255, 0.22);
+  border-radius: 2px;
+  background: rgba(8, 16, 30, 0.86);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #fff;
+}
+.hm-top-node--edge { left: 50%; top: 21%; transform: translate(-50%, -50%); }
+.hm-top-node--lab { left: 20.5%; top: 38.7%; transform: translate(-50%, -50%); }
+.hm-top-node--gpu { left: 79.5%; top: 38.7%; transform: translate(-50%, -50%); }
+.hm-top-node--telemetry { left: 20.5%; top: 70.2%; transform: translate(-50%, -50%); }
+.hm-top-node--burst { left: 79.5%; top: 70.2%; transform: translate(-50%, -50%); }
+.hm-top-node--control { left: 50%; top: 79%; transform: translate(-50%, -50%); }
+.hm-top-node__mark {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent, #7fb2ff);
+  font-size: 12px;
+  font-weight: 700;
+}
+.hm-top-node__text { display: block; }
+.hm-top-node__title { display: block; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.hm-top-node__sub { display: block; margin-top: 2px; font-size: 10.5px; letter-spacing: 0.04em; color: var(--accent, rgba(255, 255, 255, 0.5)); white-space: nowrap; }
+.hm-topology__stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(10px, 2vw, 20px);
+  margin-top: clamp(20px, 3vw, 32px);
+}
+.hm-topology__stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid rgba(120, 160, 255, 0.2);
+  border-radius: 2px;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.72);
+}
+.hm-topology__stats i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7fb2ff;
+}
+
+/* ---------------- 关于 ---------------- */
+.hm-about {
+  margin-top: 0;
+  padding: clamp(88px, 10vw, 136px) 0;
+  background: var(--hm-dark);
+  color: #fff;
+}
+.hm-about__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(28px, 6vw, 96px);
+  align-items: start;
+}
+.hm-about__head .hm-kicker { color: rgba(255, 255, 255, 0.5); }
+.hm-about__head h2 {
+  font-size: clamp(40px, 5.6vw, 80px);
+  line-height: 0.98;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.hm-about__copy { padding-left: clamp(18px, 2.4vw, 34px); border-left: 1px solid rgba(255, 255, 255, 0.12); }
+.hm-about__copy p {
+  max-width: 620px;
+  margin-bottom: 18px;
+  font-size: 15px;
+  line-height: 1.95;
+  color: rgba(255, 255, 255, 0.68);
+}
+.hm-about__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 0 0 6px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  background: none;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: gap 0.25s ease, border-color 0.25s ease;
+}
+.hm-about__link:hover { gap: 16px; border-color: #fff; }
+
+/* ---------------- 页脚 ---------------- */
+.hm-footer { background: #080c14; color: #98a1b0; }
+.hm-footer__main {
+  display: grid;
+  grid-template-columns: 1.9fr repeat(3, minmax(0, 1fr));
+  gap: clamp(32px, 4vw, 56px);
+  padding: clamp(56px, 7vw, 80px) 0 clamp(44px, 5vw, 60px);
+}
+.hm-footer .hm-logo { color: #fff; font-size: 20px; cursor: default; }
+.hm-footer .hm-logo em { color: rgba(255, 255, 255, 0.55); }
+.hm-footer__tag { max-width: 330px; margin-top: 20px; font-size: 13.5px; line-height: 1.9; color: #8a93a3; }
+.hm-footer h4 { margin: 0 0 18px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: #fff; }
+.hm-footer ul { margin: 0; padding: 0; list-style: none; }
+.hm-footer li { margin-bottom: 12px; }
+.hm-footer li button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 13.5px;
+  color: #98a1b0;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.hm-footer li button:hover { color: #fff; }
+.hm-footer li span { font-size: 13.5px; color: #7d8696; }
+.hm-footer__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 22px 0 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  color: #6d7686;
+}
+
+/* ---------------- 文字逐个飞入 ---------------- */
+.hm-split { display: block; }
+.hm-split__line { display: block; }
+.hm-split__ch {
+  display: inline-block;
+  opacity: 0;
+  transform: translate3d(-28px, 0, 0);
+  transition: opacity 0.45s var(--hm-ease), transform 0.62s var(--hm-ease);
+  transition-delay: calc(var(--i, 0) * var(--stagger, 24ms));
+  will-change: transform, opacity;
+}
+.hm-split.is-in .hm-split__ch { opacity: 1; transform: none; }
+
+/* ---------------- 入场动画 ---------------- */
+.hm-reveal {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+  transition: opacity 0.8s var(--hm-ease), transform 0.8s var(--hm-ease);
+  transition-delay: var(--d, 0s);
+}
+.hm-reveal.is-in { opacity: 1; transform: none; }
+
+/* ---------------- 响应式 ---------------- */
+@media (max-width: 1180px) {
+  .hm-eco__card { grid-template-columns: 1.4fr 1fr; }
+  .hm-footer__main { grid-template-columns: 1.6fr repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 1024px) {
+  .hm-eco__card { grid-template-columns: 1.3fr 1fr; }
+  .hm-foundation__body { grid-template-columns: 1fr; }
+  .hm-foundation__features {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    margin-top: 8px;
+  }
+  .hm-feature { padding: 0; border-top: 0; }
+  .hm-feature + .hm-feature { padding-left: 24px; border-left: 1px solid var(--hm-line); }
+}
+@media (max-width: 900px) {
+  .hm-nav__links, .hm-login { display: none; }
+  .hm-nav__actions .hm-btn { display: none; }
+  .hm-nav__toggle { display: inline-flex; }
+  .hm-nav__actions { margin-left: auto; }
+  .hm-sec-head--split { grid-template-columns: 1fr; align-items: start; gap: 16px; }
+  .hm-sec-lead { max-width: none; }
+  .hm-eco__card { grid-template-columns: 1fr; min-height: 0; }
+  .hm-eco__visual { min-height: 520px; height: 520px; }
+  .hm-eco__panel { border-top: 1px solid rgba(255, 255, 255, 0.08); border-left: 0; }
+  .hm-foundation__features { grid-template-columns: 1fr; gap: 0; }
+  .hm-feature { padding: 22px 0; border-top: 1px solid var(--hm-line); }
+  .hm-feature:first-child { padding-top: 0; border-top: 0; }
+  .hm-feature + .hm-feature { padding-left: 0; border-left: 0; }
+  .hm-service-row { grid-template-columns: 44px minmax(0, 1fr); gap: 8px 16px; }
+  .hm-service-row p { grid-column: 2; }
+  .hm-apps__item { width: 280px; }
+  .hm-marquee__track--reverse { margin-top: 10px; }
+  .hm-topology__stage { aspect-ratio: auto; padding: 30px 20px; }
+  .hm-topology__wires { display: none; }
+  .hm-topology__core {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 140px;
+    margin: 0 auto 26px;
+    transform: none;
+  }
+  .hm-topology__nodes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .hm-top-node { position: static; width: auto; min-width: 0; transform: none; }
+  .hm-about__grid { grid-template-columns: 1fr; gap: 24px; }
+  .hm-about__copy { padding-left: 0; border-left: 0; }
+  .hm-footer__main { grid-template-columns: 1fr 1fr; }
+  .hm-footer__brand { grid-column: 1 / -1; }
+}
+@media (max-width: 767px) {
+  .hm-hero { padding-top: 0; padding-left: 0; padding-right: 0; --hm-hero-pin: 44svh; }
+  .hm-hero__frame { height: 100svh; min-height: 440px; margin: 0; border-radius: 0; }
+  .hm-immersive { height: 230vh; height: 230svh; }
+  .hm-immersive__pin { position: sticky; top: 0; height: 100vh; height: 100svh; padding-bottom: 0; align-content: start; background: #04070d; }
+  .hm-immersive__media { top: 0; bottom: auto; height: 62svh; }
+  .hm-immersive__img { object-position: center 42%; }
+  .hm-immersive__copy { width: auto; margin: calc(62svh + 6svh) var(--hm-gutter) 0; padding-bottom: 0; }
+  .hm-immersive__title { font-size: clamp(30px, 8vw, 44px); margin: 12px 0 14px; }
+  .hm-immersive__sub { font-size: 13.5px; line-height: 1.85; }
+  .hm-rise__card--phone { width: 72%; margin: 0 auto; }
+  .hm-eco__visual { min-height: 400px; height: 400px; }
+  .hm-phone--back { left: 10%; top: 14%; width: 36%; }
+  .hm-phone--front { left: 44%; top: 8%; width: 44%; }
+  .hm-eco__panel { padding: 24px; }
+  .hm-eco__title { margin: 16px 0 12px; }
+  .hm-eco__stats { margin-top: 22px; }
+  .hm-eco__nav { padding-top: 22px; }
+  .hm-service-row h3 { font-size: 18px; }
+  .hm-service-row p { font-size: 14px; }
+  .hm-footer__main { grid-template-columns: 1fr 1fr; gap: 28px 20px; }
+  .hm-footer__bottom { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .hm-gallery { height: 500vh; }
+  .hm-gallery__pin { position: sticky; top: var(--hm-nav-h); height: calc(100svh - var(--hm-nav-h)); display: flex; flex-direction: column; padding-top: 4svh; }
+  .hm-gallery__head { flex: none; padding: 0 var(--hm-gutter); }
+  .hm-gallery__stage { flex: 1; position: relative; margin: 14px var(--hm-gutter) 0; }
+  .hm-slide { position: absolute; inset: 0; opacity: 0; transform: scale(0.8); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; background: #0a1018; }
+  .hm-slide img { width: 100%; height: auto; max-height: 100%; object-fit: contain; }
+  .hm-slide::after { display: none; }
+  .hm-slide figcaption { position: static; left: auto; right: auto; bottom: auto; padding: 10px 12px 0; opacity: 0; }
+  .hm-gallery__dots { display: flex; }
+}
+@media (max-width: 560px) {
+  .hm-eco__visual { min-height: 360px; height: 360px; }
+  .hm-phone--back { left: 8%; top: 16%; width: 40%; }
+  .hm-phone--front { left: 46%; top: 9%; width: 48%; }
+  .hm-footer__main { grid-template-columns: 1fr; }
+  .hm-topology__nodes { grid-template-columns: 1fr; }
+}
+
+/* 手机：三块基石与横向漫游降级；沉浸式在手机上继续 sticky */
+@media (max-width: 900px), (prefers-reduced-motion: reduce) {
+  .hm-rise__grid { grid-template-columns: 1fr; gap: 24px; }
+  .hm-rise__card { opacity: 1 !important; transform: none !important; }
+  .hm-rise__card:nth-child(2), .hm-rise__card:nth-child(3) { margin-top: 0; }
+  .hm-reveal { transition-duration: 0.6s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-immersive { height: auto; }
+  .hm-immersive__pin { position: relative; display: block; height: auto; min-height: 0; }
+  .hm-immersive__media {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: 76vh;
+    min-height: 460px;
+    border-radius: 0;
+    transform: none !important;
+  }
+  .hm-immersive__img { transform: none !important; }
+  .hm-immersive__copy {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 12%;
+    width: auto;
+    padding: 0 var(--hm-gutter);
+    text-align: left;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .hm-reveal, .hm-reveal.is-in { opacity: 1; transform: none; transition: none; }
+  .hm-split__ch { opacity: 1; transform: none; transition: none; }
+  .hm-marquee { grid-auto-rows: min-content; }
+  .hm-topology__lines path { animation: none; }
+  .hm-topology__orbit { animation: none; }
+  .hm-topology__dot { display: none; }
+  .hm-eco__scene { transition: none; }
+}
+</style>
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="stylesheet" href="landing-fx.css?v=6">
+</head>
+<body>
+<a class="skip" href="#main">跳到主内容</a>
+
+<div class="hm">
+  <div class="hm-grain" aria-hidden="true"></div>
+  <div class="hm-grain" aria-hidden="true"></div>
+  <div class="hm-grain" aria-hidden="true"></div>
+  <header class="hm-nav" id="hmNav">
+    <div class="hm-nav__inner">
+      <button class="hm-logo" type="button" data-top aria-label="回到顶部"><img class="hm-logo__img" src="assets/logo.png" alt="沕鉴 Mirror logo"><span>沕鉴</span><em>Mirror</em></button>
+      <nav class="hm-nav__links" aria-label="主导航">
+        <button type="button" data-jump="hm-eco">生态</button>
+        <button type="button" data-jump="hm-foundation">技术底座</button>
+        <button type="button" data-jump="hm-services">服务</button>
+        <button type="button" data-jump="hm-about">关于</button>
+      </nav>
+      <div class="hm-nav__actions">
+        <a class="hm-btn" href="app.html">需求广场</a>
+        <a class="hm-login" href="app.html?go=login">登录</a>
+      </div>
+      <button class="hm-nav__toggle" id="navToggle" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navMobile"><span></span></button>
+    </div>
+    <div class="hm-mobile" id="navMobile" hidden>
+      <button type="button" data-jump="hm-eco">生态</button>
+      <button type="button" data-jump="hm-foundation">技术底座</button>
+      <button type="button" data-jump="hm-services">服务</button>
+      <button type="button" data-jump="hm-about">关于</button>
+      <a class="hm-btn" href="app.html">需求广场</a>
+      <a class="hm-login" href="app.html?go=login">登录</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero：碎镜汇聚成 Mirror，下滚炸开成星 -->
+    <section class="hm-hero" id="hm-top" aria-label="沕鉴 Mirror 校园技术服务平台" style="background:#000">
+      <div class="hm-hero__frame" style="background:#000;min-height:520px">
+      </div>
+    </section>
+
+    <!-- 生态轮播 -->
+    <section class="hm-section hm-eco" id="hm-eco">
+      <div class="hm-container">
+        <div class="hm-sec-head hm-sec-head--split hm-reveal">
+          <div>
+            <p class="hm-kicker">生态</p>
+            <h2>一套长出来的生态</h2>
+          </div>
+          <p class="hm-sec-lead">集市主站、知识库、云平台与安全监测在同一底座上协同运行——它们不是拼装的开源方案，而是团队从零构建、持续迭代的自研体系。</p>
+        </div>
+
+        <div class="hm-eco__card hm-reveal">
+          <div class="hm-eco__visual">
+            <div class="hm-eco__scene is-active" data-scene="0">
+              <div class="hm-phone hm-phone--back">
+                <img src="assets/eco-market-workbench.webp" alt="" width="686" height="1029" loading="lazy">
+              </div>
+              <div class="hm-phone hm-phone--front">
+                <img src="assets/eco-market-home.webp" alt="SSE Market 集市主站界面" width="764" height="1164" loading="lazy">
+              </div>
+            </div>
+            <div class="hm-eco__scene" data-scene="1">
+              <div class="hm-window">
+                <div class="hm-window__bar"><i></i><i></i><i></i><span>iWiki · 知识库</span></div>
+                <img src="assets/eco-iwiki.png" alt="iWiki 知识库界面" width="1795" height="917" loading="lazy">
+              </div>
+            </div>
+            <div class="hm-eco__scene" data-scene="2">
+              <div class="hm-window">
+                <div class="hm-window__bar"><i></i><i></i><i></i><span>YatTerra · 云平台</span></div>
+                <img src="assets/eco-cloud.webp" alt="集市云资源管理面板界面" width="1600" height="780" loading="lazy">
+              </div>
+            </div>
+          </div>
+
+          <div class="hm-eco__panel">
+            <div class="hm-eco__meta">
+              <span id="ecoKicker">核心产品</span>
+              <span class="hm-eco__count" id="ecoCount">01 / 03</span>
+            </div>
+            <h3 class="hm-eco__title" id="ecoTitle">SSE Market 软工集市</h3>
+            <p class="hm-eco__desc" id="ecoDesc">中山大学软件工程学院的校园集市。需求发布、组队协作、作品交易都在这里发生，是整个技术生态的第一块基石。</p>
+            <ul class="hm-eco__tags" id="ecoTags">
+              <li>需求发布</li><li>组队协作</li><li>作品交易</li><li>排行榜</li>
+            </ul>
+            <div class="hm-eco__stats" id="ecoStats">
+              <div><em>注册用户</em><b>1000+</b></div>
+              <div><em>稳定运行</em><b>3 年</b></div>
+            </div>
+            <div class="hm-eco__nav">
+              <button id="ecoPrev" type="button" aria-label="上一个产品">←</button>
+              <button id="ecoNext" type="button" aria-label="下一个产品">→</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+<!-- 标语 -->
+    <section class="hm-pitch" aria-label="我们的方式">
+      <div class="hm-container">
+        <h2 class="hm-mask">
+          <span class="hm-mask__line"><span>不是拼装的开源方案，</span></span>
+          <span class="hm-mask__line"><span>而是从零长出来的自研体系。</span></span>
+        </h2>
+        <div class="hm-pitch__down">
+          <button type="button" data-jump="hm-immersive" aria-label="继续往下看">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M12 4v15M6 13l6 6 6-6"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 沉浸式全屏 -->
+    <section class="hm-immersive" id="hm-immersive" aria-label="走进真实场景">
+      <div class="hm-immersive__pin">
+        <div class="hm-immersive__media">
+          <img class="hm-immersive__img" src="assets/campus-close.jpg" alt="三位学生在校园里一起讨论项目" width="1600" height="1067" loading="lazy">
+          <div class="hm-immersive__tone" aria-hidden="true"></div>
+          <div class="hm-immersive__shade" aria-hidden="true"></div>
+        </div>
+        <div class="hm-immersive__copy">
+          <p class="hm-immersive__kicker">走进真实场景</p>
+          <h2 class="hm-immersive__title">技术不该只在<br>屏幕里</h2>
+          <p class="hm-immersive__sub">从课堂展示到院系系统，把代码放到同学和老师真正会用的地方。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 三块基石 -->
+    <section class="hm-section hm-rise" id="hm-rise">
+      <div class="hm-container">
+        <div class="hm-sec-head hm-sec-head--split hm-reveal">
+          <div>
+            <p class="hm-kicker">三块基石</p>
+            <h2>集市、知识库、云平台</h2>
+          </div>
+          <p class="hm-sec-lead">它们从同一套底座上长出来，也把同一套能力递到不同场景。往下滚，三张图会各自往上走。</p>
+        </div>
+
+        <div class="hm-rise__grid">
+          <figure class="hm-rise__card hm-rise__card--phone" data-rise-card>
+            <div class="hm-rise__media">
+              <img src="assets/eco-market-home.webp" alt="SSE Market 集市主站界面" width="764" height="1164" loading="lazy">
+            </div>
+            <figcaption class="hm-rise__cap"><b>SSE Market</b><span>校园集市</span></figcaption>
+          </figure>
+          <figure class="hm-rise__card hm-rise__card--panel" data-rise-card>
+            <div class="hm-rise__media">
+              <img src="assets/eco-iwiki.png" alt="iWiki 知识库界面" width="1795" height="917" loading="lazy">
+            </div>
+            <figcaption class="hm-rise__cap"><b>iWiki 知识库</b><span>知识库与文档协作</span></figcaption>
+          </figure>
+          <figure class="hm-rise__card hm-rise__card--panel" data-rise-card>
+            <div class="hm-rise__media">
+              <img src="assets/eco-cloud.webp" alt="集市云资源管理面板界面" width="1600" height="780" loading="lazy">
+            </div>
+            <figcaption class="hm-rise__cap"><b>YatTerra 云平台</b><span>Pod · GPU · 存储</span></figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- 横向漫游 -->
+    <section class="hm-gallery" id="hm-gallery" aria-label="生态全景">
+      <div class="hm-gallery__pin">
+        <div class="hm-gallery__head">
+          <p class="hm-kicker">生态全景</p>
+          <h2>从集市到云，一条链路</h2>
+        </div>
+        <div class="hm-gallery__stage">
+          <figure class="hm-slide">
+            <img src="assets/architecture.webp" alt="SSE Market 技术底座架构图" width="1359" height="1173" loading="lazy">
+            <figcaption><span class="hm-slide__tag">架构全景</span><span class="hm-slide__title">SSE_MARKET · 一条链路</span></figcaption>
+          </figure>
+          <figure class="hm-slide">
+            <img src="assets/threat-map.webp" alt="平台实时攻防态势监测大屏" width="1600" height="780" loading="lazy">
+            <figcaption><span class="hm-slide__tag">安全监测</span><span class="hm-slide__title">实时攻防态势，一屏掌握</span></figcaption>
+          </figure>
+          <figure class="hm-slide">
+            <img src="assets/eco-iwiki.png" alt="iWiki 知识库界面" width="1795" height="917" loading="lazy">
+            <figcaption><span class="hm-slide__tag">iWiki</span><span class="hm-slide__title">课程笔记与工程文档</span></figcaption>
+          </figure>
+          <figure class="hm-slide">
+            <img src="assets/eco-cloud.webp" alt="集市云资源管理面板界面" width="1600" height="780" loading="lazy">
+            <figcaption><span class="hm-slide__tag">集市云</span><span class="hm-slide__title">GPU 与容器调度</span></figcaption>
+          </figure>
+          <figure class="hm-slide">
+            <img src="assets/campus-wide.jpg" alt="学生在校园里一起使用笔记本电脑" width="1600" height="1067" loading="lazy">
+            <figcaption><span class="hm-slide__tag">校园</span><span class="hm-slide__title">技术最终落到人身上</span></figcaption>
+          </figure>
+        </div>
+        <div class="hm-gallery__ctrl">
+          <button class="hm-gallery__arrow" id="galPrev" type="button" aria-label="上一张">←</button>
+          <div class="hm-gallery__dots"><i class="is-on"></i><i></i><i></i><i></i><i></i></div>
+          <button class="hm-gallery__arrow" id="galNext" type="button" aria-label="下一张">→</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- YatSSO 生态 -->
+    <section class="hm-section hm-apps" id="hm-apps">
+      <div class="hm-container">
+        <div class="hm-sec-head hm-sec-head--split hm-reveal">
+          <div>
+            <p class="hm-kicker">YatSSO 生态</p>
+            <h2>一个账号，接入整个生态</h2>
+          </div>
+          <p class="hm-sec-lead">这些应用都通过 YatSSO 完成单点登录；每次授权都出同意页，只交出被明确同意的字段。身份只回答「你是谁」，权限由各平台自行判定。</p>
+        </div>
+      </div>
+      <div class="hm-marquee" aria-label="已接入 YatSSO 的应用">
+        <div class="hm-marquee__track" id="marqueeA"></div>
+        <div class="hm-marquee__track hm-marquee__track--reverse" id="marqueeB"></div>
+      </div>
+    </section>
+
+    <!-- 技术底座 -->
+    <section class="hm-section hm-foundation" id="hm-foundation">
+      <div class="hm-container">
+        <div class="hm-sec-head hm-sec-head--split hm-reveal">
+          <div>
+            <p class="hm-kicker">技术底座</p>
+            <h2>一套底座，支撑全部子平台</h2>
+          </div>
+          <p class="hm-sec-lead">软工集市作为技术验证载体，沉淀出统一鉴权、部署调度与算力供给的基础设施，支撑全部子平台运行，也是对外输出技术能力的来源。</p>
+        </div>
+
+        <div class="hm-foundation__body">
+          <figure class="hm-foundation__figure hm-reveal">
+            <img src="assets/architecture.webp" alt="SSE Market 技术底座架构图：集市主站、UniSSO、Deploy 调度中枢与云基础设施" width="1359" height="1173" loading="lazy">
+            <figcaption>SSE_MARKET · 架构全景 · 11 节点 / 18 关系</figcaption>
+          </figure>
+
+          <div class="hm-foundation__features">
+            <div class="hm-feature hm-reveal" style="--d:0s">
+              <p class="hm-feature__sub">YatSSO</p>
+              <h3>一次登录，处处通行</h3>
+              <p>标准 OAuth2 授权码 + PKCE(S256)；OIDC ID Token 用 RS256 签名，公钥通过 JWKS 公开，可离线验签。</p>
+            </div>
+            <div class="hm-feature hm-reveal" style="--d:.06s">
+              <p class="hm-feature__sub">DEPLOY</p>
+              <h3>部署调度中枢</h3>
+              <p>自研 Deploy 体系覆盖从代码到上线的全流程，子平台按需部署、灰度发布。</p>
+            </div>
+            <div class="hm-feature hm-reveal" style="--d:.12s">
+              <p class="hm-feature__sub">YatTerra</p>
+              <h3>把算力接进同一层</h3>
+              <p>连接校园与实验室的内网 GPU，统一编排 Pod、GPU、存储；vLLM / LoRA 推理与 Telemetry 观测走同一套平台。</p>
+            </div>
+            <p class="hm-foundation__note">身份只回答「你是谁」，权限由各平台自行判定；每次授权都出同意页，字段按 scope 最小化，跨服务关联同一人的 sse_sub 需单独申请 sse_identity。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- YatTerra 算力拓扑 -->
+    <section class="hm-topology" id="hm-topology" aria-label="YatTerra 算力拓扑">
+      <div class="hm-container">
+        <div class="hm-sec-head hm-sec-head--split hm-reveal">
+          <div>
+            <p class="hm-kicker">YatTerra · 算力拓扑</p>
+            <h2>把分散的设备，接成一层底座</h2>
+          </div>
+          <p class="hm-sec-lead">边缘入口、校园实验室、GPU 池与弹性云由同一套调度中枢编排；可观测性覆盖整条链路。</p>
+        </div>
+
+        <div class="hm-topology__stage hm-reveal">
+          <svg class="hm-topology__wires" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <defs>
+              <filter id="hm-glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2.5" result="blur" />
+                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
+            <g class="hm-topology__lines">
+              <path d="M500 250 C500 205 500 165 500 130" />
+              <path d="M400 290 C335 272 265 255 205 240" />
+              <path d="M600 290 C665 272 735 255 795 240" />
+              <path d="M400 330 C335 352 265 395 205 435" />
+              <path d="M600 330 C665 352 735 395 795 435" />
+              <path d="M500 370 C500 415 500 455 500 490" />
+            </g>
+            <g>
+              <circle class="hm-topology__dot" r="3.4" fill="#7fb2ff" filter="url(#hm-glow)"><animateMotion dur="4.6s" begin="0s" repeatCount="indefinite" path="M500 250 C500 205 500 165 500 130" /></circle>
+              <circle class="hm-topology__dot" r="3.4" fill="#6ea8ff" filter="url(#hm-glow)"><animateMotion dur="5.2s" begin="-0.9s" repeatCount="indefinite" path="M400 290 C335 272 265 255 205 240" /></circle>
+              <circle class="hm-topology__dot" r="3.4" fill="#6ee7ff" filter="url(#hm-glow)"><animateMotion dur="5.6s" begin="-1.8s" repeatCount="indefinite" path="M600 290 C665 272 735 255 795 240" /></circle>
+              <circle class="hm-topology__dot" r="3.4" fill="#fbbf24" filter="url(#hm-glow)"><animateMotion dur="5.4s" begin="-2.6s" repeatCount="indefinite" path="M400 330 C335 352 265 395 205 435" /></circle>
+              <circle class="hm-topology__dot" r="3.4" fill="#c084fc" filter="url(#hm-glow)"><animateMotion dur="5.8s" begin="-3.4s" repeatCount="indefinite" path="M600 330 C665 352 735 395 795 435" /></circle>
+              <circle class="hm-topology__dot" r="3.4" fill="#a5b4fc" filter="url(#hm-glow)"><animateMotion dur="4.8s" begin="-4.2s" repeatCount="indefinite" path="M500 370 C500 415 500 455 500 490" /></circle>
+            </g>
+          </svg>
+
+          <div class="hm-topology__core">
+            <span class="hm-topology__orbit" aria-hidden="true"></span>
+            <span class="hm-topology__core-text">
+              <span class="hm-topology__core-label">YatTerra</span>
+              <span class="hm-topology__core-sub">统一调度</span>
+            </span>
+          </div>
+
+          <div class="hm-topology__nodes">
+            <div class="hm-top-node hm-top-node--edge" style="--accent:#7fb2ff">
+              <span class="hm-top-node__mark" aria-hidden="true">边</span>
+              <span class="hm-top-node__text"><span class="hm-top-node__title">边缘入口</span><span class="hm-top-node__sub">ingress · wss</span></span>
+            </div>
+            <div class="hm-top-node hm-top-node--lab" style="--accent:#6ea8ff">
+              <span class="hm-top-node__mark" aria-hidden="true">实</span>
+              <span class="hm-top-node__text"><span class="hm-top-node__title">校园实验室</span><span class="hm-top-node__sub">12×A100</span></span>
+            </div>
+            <div class="hm-top-node hm-top-node--gpu" style="--accent:#6ee7ff">
+              <span class="hm-top-node__mark" aria-hidden="true">池</span>
+              <span class="hm-top-node__text"><span class="hm-top-node__title">GPU 池</span><span class="hm-top-node__sub">48×H100</span></span>
+            </div>
+            <div class="hm-top-node hm-top-node--burst" style="--accent:#c084fc">
+              <span class="hm-top-node__mark" aria-hidden="true">弹</span>
+              <span class="hm-top-node__text"><span class="hm-top-node__title">弹性云</span><span class="hm-top-node__sub">burst · $/hr</span></span>
+            </div>
+            <div class="hm-top-node hm-top-node--control" style="--accent:#a5b4fc">
+              <span class="hm-top-node__mark" aria-hidden="true">调</span>
+              <span class="hm-top-node__text"><span class="hm-top-node__title">调度中枢</span><span class="hm-top-node__sub">schedule · observe</span></span>
+            </div>
+            <div class="hm-top-node hm-top-node--telemetry" style="--accent:#fbbf24">
+              <span class="hm-top-node__mark" aria-hidden="true">观</span>
+              <span class="hm-top-node__text"><span class="hm-top-node__title">可观测</span><span class="hm-top-node__sub">otel · logs</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hm-topology__stats hm-reveal">
+          <span><i aria-hidden="true"></i>99.9% uptime</span>
+          <span><i aria-hidden="true"></i>&lt;12ms p95</span>
+          <span><i aria-hidden="true"></i>3 regions live</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 服务 -->
+    <section class="hm-section hm-services" id="hm-services">
+      <div class="hm-container">
+        <div class="hm-sec-head hm-sec-head--split hm-reveal">
+          <div>
+            <p class="hm-kicker">服务</p>
+            <h2>把底座能力交给场景</h2>
+          </div>
+          <p class="hm-sec-lead">无论是学生场景的数据可视化与平台工具，还是院系部门、校企合作单位的数字化系统，团队具备从需求分析、架构设计到系统交付的完整工程实践能力。</p>
+        </div>
+
+        <div class="hm-service-list">
+          <div class="hm-service-row hm-reveal" style="--d:0s">
+            <span class="hm-service__num">01</span>
+            <h3>数据可视化与平台服务</h3>
+            <p>面向课程展示、社团活动、校园调研等场景，提供数据可视化平台、网站与小程序等工具类技术服务。</p>
+          </div>
+          <div class="hm-service-row hm-reveal" style="--d:.05s">
+            <span class="hm-service__num">02</span>
+            <h3>定制化系统开发</h3>
+            <p>面向校内院系与职能部门的中小型数字化需求，从需求分析到系统交付完整落地。</p>
+          </div>
+          <div class="hm-service-row hm-reveal" style="--d:.1s">
+            <span class="hm-service__num">03</span>
+            <h3>平台建设与合作</h3>
+            <p>依托可复用的自研技术体系搭建业务平台；经 Blue Hub 枢纽拓展校企合作渠道。</p>
+          </div>
+        </div>
+
+        <div class="hm-services__cta hm-reveal">
+          <a class="hm-btn hm-btn--lg" href="app.html">进入需求大厅 <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </section>
+<!-- 关于 -->
+    <section class="hm-about" id="hm-about">
+      <div class="hm-container">
+        <div class="hm-about__grid">
+          <div class="hm-about__head hm-reveal">
+            <p class="hm-kicker">关于我们</p>
+            <h2>沕鉴工作室</h2>
+          </div>
+          <div class="hm-about__copy hm-reveal">
+            <p>沕鉴·Mirror 校园技术服务平台由沕鉴工作室建设运营。我们在建设平台的过程中，锻炼形成梯队完整的全栈学生研发团队，让学生技术成果在真实场景中实现价值落地。</p>
+            <p>未来将依托 Blue Hub 枢纽资源拓展合作渠道，打磨标准化服务流程，持续迭代技术底座。</p>
+            <a class="hm-about__link" href="#hm-foundation">看技术底座 <span aria-hidden="true">↓</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <section class="hm-slogan" id="hm-slogan">
+    <div class="hm-container hm-reveal">
+      <div class="hm-slogan__kicker">Software defines the world · Engineering builds the future</div>
+      <h2 class="hm-slogan__line">软件定义世界，<em>工程铸就未来</em></h2>
+      <div class="hm-slogan__rule" aria-hidden="true"></div>
+      <p class="hm-slogan__sub">沕鉴工作室 · 把技术，做进校园的真实场景</p>
+    </div>
+  </section>
+
+  <footer class="hm-footer" id="hm-footer">
+    <div class="hm-container">
+      <div class="hm-footer__main">
+        <div class="hm-footer__brand">
+          <div class="hm-logo"><img class="hm-logo__img" src="assets/logo.png" alt=""><span>沕鉴</span><em>Mirror</em></div>
+          <p class="hm-footer__tag">沕鉴工作室 · 中山大学软件工程学院<br>把技术，做进校园的真实场景。</p>
+        </div>
+        <div>
+          <h4>平台入口</h4>
+          <ul>
+            <li><a href="app.html">需求大厅</a></li>
+            <li><a href="app.html?go=publish">发布需求</a></li>
+            <li><a href="app.html?go=me">我的需求</a></li>
+            <li><a href="app.html?go=chat">私信</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>了解我们</h4>
+          <ul>
+            <li><button type="button" data-jump="hm-eco">生态</button></li>
+            <li><button type="button" data-jump="hm-foundation">技术底座</button></li>
+            <li><button type="button" data-jump="hm-services">服务</button></li>
+            <li><button type="button" data-jump="hm-about">关于</button></li>
+          </ul>
+        </div>
+        <div>
+          <h4>关于</h4>
+          <ul>
+            <li><span>中山大学软件工程学院</span></li>
+            <li><span>沕鉴工作室</span></li>
+            <li><span>YatSSO · 统一身份</span></li>
+            <li><span>YatTerra · 云平台</span></li>
+            <li><span>Blue Hub · 校企合作</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="hm-footer__bottom">
+        <span>© 2026 沕鉴工作室 · 沕鉴·Mirror</span>
+        <span>SSE Market · 校园技术服务平台</span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<noscript><style>
+  .hm-reveal { opacity: 1 !important; transform: none !important; }
+  .hm-mask .hm-mask__line > span { transform: none !important; }
+  .hm-immersive__copy { opacity: 1 !important; transform: none !important; }
+  .hm-immersive__media { transform: none !important; border-radius: 0 !important; }
+  .hm-rise__card { opacity: 1 !important; transform: none !important; }
+</style></noscript>
+
+
+<script>
+(() => {
+  const $ = (selector, root = document) => root.querySelector(selector)
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)]
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)')
+  /* 图片异步撑开后浏览器可能把滚动锚点留在底部，加载完成回到顶部，避免一打开就在页脚、下滚无反应 */
+  if (!location.hash) {
+    const resetTop = () => window.scrollTo(0, 0)
+    resetTop()
+    window.addEventListener('load', resetTop, { once: true })
+  }
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+  const easeOut = (x) => 1 - Math.pow(1 - x, 3)
+  const smoothstep = (a, b, x) => {
+    const t = clamp((x - a) / (b - a), 0, 1)
+    return t * t * (3 - 2 * t)
+  }
+  const staticMode = () => reduce.matches || window.innerWidth <= 900
+
+  /* 导航 */
+  const nav = $('#hmNav')
+  const heroEl = document.querySelector('.hm-hero')
+  const navToggle = $('#navToggle')
+  const navMobile = $('#navMobile')
+
+  function closeMenu() {
+    navMobile.hidden = true
+    navToggle.setAttribute('aria-expanded', 'false')
+    navToggle.setAttribute('aria-label', '打开菜单')
+  }
+
+  navToggle.addEventListener('click', () => {
+    if (!navMobile.hidden) {
+      closeMenu()
+      return
+    }
+    navMobile.hidden = false
+    navToggle.setAttribute('aria-expanded', 'true')
+    navToggle.setAttribute('aria-label', '关闭菜单')
+  })
+
+  function jump(id) {
+    closeMenu()
+    document.getElementById(id)?.scrollIntoView({
+      behavior: reduce.matches ? 'auto' : 'smooth',
+      block: 'start',
+    })
+  }
+
+  $$('[data-jump]').forEach((el) => el.addEventListener('click', () => jump(el.dataset.jump)))
+  $$('[data-top]').forEach((el) => el.addEventListener('click', () => {
+    closeMenu()
+    window.scrollTo({ top: 0, behavior: reduce.matches ? 'auto' : 'smooth' })
+  }))
+
+  /* 标题逐字飞入 */
+  function tokenize(line) {
+    return line.match(/[㐀-鿿]|[A-Za-z0-9]+(?:[.'’-][A-Za-z0-9]+)*|[\s\S]/g) || []
+  }
+
+  const splitObserver = 'IntersectionObserver' in window
+    ? new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting)
+          return
+        entry.target.classList.add('is-in')
+        splitObserver.unobserve(entry.target)
+      })
+    }, { threshold: 0.35, rootMargin: '0px 0px -8% 0px' })
+    : null
+
+  function splitText(el, lines, stagger = 24) {
+    el.classList.add('hm-split')
+    el.style.setProperty('--stagger', `${stagger}ms`)
+    el.setAttribute('aria-label', lines.join(' '))
+    let index = 0
+    el.innerHTML = lines.map((line) => {
+      const chars = tokenize(line).map((text) => {
+        const html = text === ' ' ? '&nbsp;' : text
+        return `<span class="hm-split__ch" style="--i:${index++}" aria-hidden="true">${html}</span>`
+      }).join('')
+      return `<span class="hm-split__line">${chars}</span>`
+    }).join('')
+    if (splitObserver)
+      splitObserver.observe(el)
+    else
+      el.classList.add('is-in')
+  }
+
+  [
+    ['.hm-eco .hm-sec-head h2', ['一套长出来的生态'], 24],
+    ['.hm-pitch h2', ['不是拼装的开源方案，', '而是从零长出来的自研体系。'], 22],
+    ['.hm-rise .hm-sec-head h2', ['集市、知识库、云平台'], 24],
+    ['.hm-gallery__head h2', ['从集市到云，一条链路'], 24],
+    ['.hm-apps .hm-sec-head h2', ['一个账号，接入整个生态'], 22],
+    ['.hm-foundation .hm-sec-head h2', ['一套底座，支撑全部子平台'], 22],
+    ['.hm-services .hm-sec-head h2', ['把底座能力交给场景'], 24],
+    ['.hm-topology .hm-sec-head h2', ['把分散的设备，接成一层底座'], 22],
+    ['.hm-about h2', ['沕鉴工作室'], 24],
+  ].forEach(([selector, lines, stagger]) => {
+    const el = $(selector)
+    if (el)
+      splitText(el, lines, stagger)
+  })
+
+  /* 生态左右循环 */
+  const appList = [
+    { mark: '集', name: '集市主站', desc: '二手交易、招募、活动与社区', href: 'https://ssemarket.cn/' },
+    { mark: 'i', logo: 'assets/logos/iwiki.png', name: 'iWiki', desc: '知识库与文档协作', href: 'https://iwiki.ssemarket.cn/' },
+    { mark: 'O', name: 'Octop', desc: '运维控制台，单点登录直达', href: 'https://octop.ssemarket.cn/' },
+    { mark: '招', name: '集市招聘', desc: '岗位发布与投递', href: 'https://join.ssemarket.cn/' },
+    { mark: 'S', logo: 'assets/logos/cloud.png', name: 'SSE 云平台', desc: 'Pod、GPU、存储统一调度', href: 'https://cloud.ssemarket.cn/' },
+    { mark: '图', name: '图灵科竞协会', desc: '图灵科竞协会统一平台', href: 'https://turing.ssemarket.cn/' },
+  ]
+  function appCard(app, hidden) {
+    return '<a class="hm-apps__item" href="' + app.href + '" target="_blank" rel="noopener noreferrer"'
+      + (hidden ? ' aria-hidden="true" tabindex="-1"' : '') + '>'
+      + (app.logo ? '<span class="hm-apps__logo" aria-hidden="true"><img src="' + app.logo + '" alt=""></span>' : '<span class="hm-apps__mark" aria-hidden="true">' + app.mark + '</span>')
+      + '<span class="hm-apps__body"><span class="hm-apps__name">' + app.name + '<em>已接入</em></span>'
+      + '<span class="hm-apps__desc">' + app.desc + '</span></span></a>'
+  }
+  const marqueeA = document.getElementById('marqueeA')
+  const marqueeB = document.getElementById('marqueeB')
+  if (marqueeA && marqueeB) {
+    const rows = [appList, [...appList].reverse()]
+    ;[marqueeA, marqueeB].forEach((el, ri) => {
+      const list = rows[ri]
+      let html = ''
+      for (let k = 0; k < 2; k++) html += list.map(a => appCard(a, k > 0)).join('')
+      el.innerHTML = html
+    })
+  }
+
+  /* 生态轮播 */
+  const slides = [
+    {
+      kicker: '核心产品',
+      title: 'SSE Market 软工集市',
+      desc: '中山大学软件工程学院的校园集市。需求发布、组队协作、作品交易都在这里发生，是整个技术生态的第一块基石。',
+      tags: ['需求发布', '组队协作', '作品交易', '排行榜'],
+      stats: [['注册用户', '1000+'], ['稳定运行', '3 年']],
+    },
+    {
+      kicker: '知识沉淀',
+      title: 'iWiki 知识库',
+      desc: '中山大学软件工程学院的知识库，与集市共用 UniSSO 登录。课程笔记、工程文档与项目复盘在这里沉淀，让每一届同学的经验都能被下一届接住。',
+      tags: ['课程笔记', '工程文档', '项目复盘', 'UniSSO 登录'],
+      stats: [['学院共建', '持续更新'], ['内容形态', '文档 · Wiki']],
+    },
+    {
+      kicker: '算力底座',
+      title: 'YatTerra 云平台',
+      desc: '统一算力与部署平台：把校园与实验室的 GPU、存储和服务接进同一套工作流，Pod、GPU、存储统一调度。',
+      tags: ['Pod', 'GPU', '存储', 'Telemetry'],
+      stats: [['GPU Pool', '48×H100'], ['SLA', '99.9% uptime']],
+    },
+  ]
+
+  const scenes = $$('[data-scene]')
+  const ecoKicker = $('#ecoKicker')
+  const ecoCount = $('#ecoCount')
+  const ecoTitle = $('#ecoTitle')
+  const ecoDesc = $('#ecoDesc')
+  const ecoTags = $('#ecoTags')
+  const ecoStats = $('#ecoStats')
+  let active = 0
+
+  function renderEco(index) {
+    active = (index + slides.length) % slides.length
+    scenes.forEach((scene, i) => scene.classList.toggle('is-active', i === active))
+    const slide = slides[active]
+    ecoKicker.textContent = slide.kicker
+    ecoCount.textContent = `${String(active + 1).padStart(2, '0')} / 03`
+    ecoTitle.textContent = slide.title
+    ecoDesc.textContent = slide.desc
+    ecoTags.innerHTML = slide.tags.map((tag) => `<li>${tag}</li>`).join('')
+    ecoStats.innerHTML = slide.stats.map(([key, value]) => `<div><em>${key}</em><b>${value}</b></div>`).join('')
+  }
+
+  $('#ecoPrev').addEventListener('click', () => renderEco(active - 1))
+  $('#ecoNext').addEventListener('click', () => renderEco(active + 1))
+  renderEco(0)
+
+  /* 普通入场动画 */
+  const revealTargets = $$('.hm-reveal')
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting)
+          return
+        entry.target.classList.add('is-in')
+        observer.unobserve(entry.target)
+      })
+    }, { threshold: 0.16, rootMargin: '0px 0px -6% 0px' })
+    revealTargets.forEach((el) => observer.observe(el))
+  }
+  else {
+    revealTargets.forEach((el) => el.classList.add('is-in'))
+  }
+
+  /* 沉浸式全屏 */
+  const immersive = $('#hm-immersive')
+  const immersivePin = immersive?.querySelector('.hm-immersive__pin')
+  const immersiveMedia = immersive?.querySelector('.hm-immersive__media')
+  const immersiveImg = immersive?.querySelector('.hm-immersive__img')
+  const immersiveCopy = immersive?.querySelector('.hm-immersive__copy')
+  let immersiveStatic = false
+
+  function resetImmersive() {
+    if (immersiveMedia) {
+      immersiveMedia.style.transform = ''
+      immersiveMedia.style.borderRadius = ''
+    }
+    if (immersiveImg)
+      immersiveImg.style.transform = ''
+    if (immersiveCopy) {
+      immersiveCopy.style.opacity = ''
+      immersiveCopy.style.transform = ''
+    }
+    nav.classList.remove('is-hidden')
+  }
+
+  function updateImmersive() {
+    if (!immersive || !immersivePin)
+      return
+    if (reduce.matches) {
+      if (!immersiveStatic) {
+        immersiveStatic = true
+        resetImmersive()
+      }
+      return
+    }
+    immersiveStatic = false
+
+    const rect = immersive.getBoundingClientRect()
+    if (rect.bottom < 0 || rect.top > window.innerHeight) {
+      nav.classList.remove('is-hidden')
+      return
+    }
+    const total = immersive.offsetHeight - immersivePin.offsetHeight
+    if (total <= 0)
+      return
+    const p = clamp(-rect.top / total, 0, 1)
+    const eased = easeOut(p)
+    const compact = window.innerWidth <= 767
+    const base = compact ? 0.86 : 0.78
+    const lift = compact ? 8 : 16
+    immersiveMedia.style.transform = `translate3d(0, ${((1 - eased) * lift).toFixed(1)}px, 0) scale(${(base + (1 - base) * eased).toFixed(4)})`
+    immersiveMedia.style.borderRadius = `${(3 * (1 - eased)).toFixed(1)}px`
+    immersiveImg.style.transform = `scale(${(1.02 + 0.06 * eased).toFixed(4)})`
+    const copyIn = smoothstep(0.08, 0.3, p)
+    immersiveCopy.style.opacity = copyIn.toFixed(3)
+    immersiveCopy.style.transform = `translate3d(0, ${((1 - copyIn) * 36).toFixed(1)}px, 0)`
+
+    if (p > 0.06 && p < 0.94)
+      nav.classList.add('is-hidden')
+    else
+      nav.classList.remove('is-hidden')
+  }
+
+  /* 三块基石 */
+  const rise = $('#hm-rise')
+  const riseCards = $$('[data-rise-card]')
+  const riseOffsets = [120, 190, 90]
+  const riseSpeeds = [1, 1.22, 0.86]
+  let riseStatic = false
+
+  function resetRise() {
+    riseCards.forEach((card) => {
+      card.style.transform = ''
+      card.style.opacity = ''
+    })
+  }
+
+  function updateRise() {
+    if (!rise)
+      return
+    if (staticMode()) {
+      if (!riseStatic) {
+        riseStatic = true
+        resetRise()
+      }
+      return
+    }
+    riseStatic = false
+
+    const vh = window.innerHeight
+    const rect = rise.getBoundingClientRect()
+    if (rect.bottom < 0 || rect.top > vh * 1.3)
+      return
+    const progress = clamp((vh - rect.top) / (vh * 0.75), 0, 1)
+    riseCards.forEach((card, i) => {
+      const eased = easeOut(clamp(progress * riseSpeeds[i], 0, 1))
+      card.style.transform = `translate3d(0, ${((1 - eased) * riseOffsets[i]).toFixed(1)}px, 0)`
+      card.style.opacity = (0.12 + 0.88 * eased).toFixed(3)
+    })
+  }
+
+  /* 横向漫游 */
+  const gallery = $('#hm-gallery')
+  const galleryPin = gallery?.querySelector('.hm-gallery__pin')
+  const gallerySlides = gallery ? $$('.hm-slide') : []
+  const galleryDots = gallery ? $$('.hm-gallery__dots i') : []
+
+  /* 画廊：手动切换（圆点 / 左右箭头 / 键盘方向键），不滚动整页 */
+  let galIndex = 0
+  function paintGallery(t, cap) {
+    cap.style.opacity = t.toFixed(3)
+    cap.style.transform = `scale(${(0.86 + 0.14 * t).toFixed(4)})`
+    const fig = cap.querySelector('figcaption')
+    if (fig) {
+      fig.style.opacity = t.toFixed(3)
+      fig.style.transform = `translate3d(0, ${((1 - t) * 18).toFixed(1)}px, 0)`
+    }
+  }
+  function setGallery(k) {
+    if (!gallerySlides.length) return
+    galIndex = ((k % gallerySlides.length) + gallerySlides.length) % gallerySlides.length
+    gallerySlides.forEach((sl, i) => paintGallery(i === galIndex ? 1 : 0, sl))
+    galleryDots.forEach((d, i) => {
+      d.classList.toggle('is-on', i === galIndex)
+      d.setAttribute('aria-current', i === galIndex ? 'true' : 'false')
+    })
+  }
+  if (gallery && gallerySlides.length) {
+    galleryDots.forEach((dot, k) => {
+      dot.setAttribute('role', 'button')
+      dot.tabIndex = 0
+      dot.setAttribute('aria-label', '查看第 ' + (k + 1) + ' 张 / 共 ' + gallerySlides.length + ' 张')
+      dot.addEventListener('click', () => setGallery(k))
+      dot.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setGallery(k) } })
+    })
+    const galPrev = $('#galPrev'), galNext = $('#galNext')
+    if (galPrev) galPrev.addEventListener('click', () => setGallery(galIndex - 1))
+    if (galNext) galNext.addEventListener('click', () => setGallery(galIndex + 1))
+    document.addEventListener('keydown', (e) => {
+      const t = e.target
+      if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return
+      const r = gallery.getBoundingClientRect()
+      if (r.bottom < 0 || r.top > window.innerHeight) return
+      if (e.key === 'ArrowLeft') { e.preventDefault(); setGallery(galIndex - 1) }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); setGallery(galIndex + 1) }
+    })
+    setGallery(0)
+  }
+
+  /* 统一滚动 */
+  let pending = false
+  function update() {
+    pending = false
+    if (heroEl) {
+      const solidAt = window.innerWidth <= 767 ? 96 : 64
+      nav.classList.toggle('is-solid', heroEl.getBoundingClientRect().bottom <= solidAt)
+    } else {
+      nav.classList.toggle('is-solid', window.scrollY > 8)
+    }
+    updateImmersive()
+    updateRise()
+  }
+
+  function onScroll() {
+    if (pending)
+      return
+    pending = true
+    requestAnimationFrame(update)
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('resize', onScroll)
+  reduce.addEventListener?.('change', onScroll)
+  update()
+})()
+</script>
+
+<script>
+/* 首屏碎镜：碎片从四周汇聚成 Mirror，反光扫过；下滚时炸开飞散，化成星尘嵌入背景 */
+(function () {
+  var hero = document.querySelector(".hm-hero");
+  var frame = document.querySelector(".hm-hero__frame");
+  if (!hero || !frame) return;
+
+  var canvas = document.createElement("canvas");
+  canvas.className = "hm-hero__mirror";
+  canvas.setAttribute("aria-hidden", "true");
+  frame.appendChild(canvas);
+  var ctx = canvas.getContext("2d");
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  var WW = 1500, WH = 470, WORD = "Mirror";
+  var word = null, mask = null, glow = null, refl = null, reflH = 0, glint = null, gctx = null;
+  var flash = null, dotCold = null, dotWarm = null;
+  var bg = null, maskData = null, box = null, baseY = 0;
+  var shards = [], dust = [], lensShards = [];
+  var W = 0, H = 0, DPR = 1, raf = 0;
+  var visible = true, inView = true, booted = false;
+  var tin = 0, t0 = 0, pinTop = 0, pinLen = 1, prog = 0, prevSy = -1, progPrev = 0;
+  var burstOn = false, burstAt = 0, burstDur = 1600;
+  var gatherOn = false, gatherAt = 0, gatherDur = 1150, glintAt = 0;
+  var hoverT = 0, hover = 0, hmx = 0, hmy = 0, pmx = 0, pmy = 0, pmInit = false;
+  var canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  var sparks = [], burstCx = 0, burstCy = 0;
+  /* 不规则碎片透镜：随机多边形顶点，随时间轻微morph，绝不画圆 */
+  var lensSeed = [], lensAt = 0;
+  function buildLensSeed() {
+    lensSeed = [];
+    var nv = 18;
+    for (var i = 0; i < nv; i++) {
+      lensSeed.push({ a: i / nv * 6.2832 + rnd(-0.05, 0.05), r: rnd(0.84, 1.12), ph: rnd(0, 6.2832) });
+    }
+  }
+  function trand(a, b, k) {
+    var x = Math.sin(a * 127.1 + b * 311.7 + k * 74.7) * 43758.5453;
+    return x - Math.floor(x);
+  }
+  function lensTrace(c, cx, cy, base, t) {
+    for (var i = 0; i < lensSeed.length; i++) {
+      var v = lensSeed[i];
+      var rr = base * v.r * (1 + 0.05 * Math.sin(t * 1.6 + v.ph));
+      var x = cx + Math.cos(v.a) * rr, y = cy + Math.sin(v.a) * rr;
+      if (i === 0) c.moveTo(x, y); else c.lineTo(x, y);
+    }
+    c.closePath();
+  }
+  if (canHover) {
+    frame.addEventListener("pointermove", function (ev) {
+      var r = frame.getBoundingClientRect();
+      hmx = ev.clientX - r.left; hmy = ev.clientY - r.top;
+      if (!pmInit) { pmx = hmx; pmy = hmy; pmInit = true; }
+      hoverT = 1;
+    });
+    frame.addEventListener("pointerleave", function () { hoverT = 0; });
+  }
+
+  function make(w, h) {
+    var c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(w));
+    c.height = Math.max(1, Math.round(h));
+    return c;
+  }
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+  function buildWord() {
+    word = make(WW, WH);
+    var g = word.getContext("2d");
+    var fam = '"Segoe UI", "Helvetica Neue", Arial, sans-serif';
+    var fs = 210;
+    g.font = "500 " + fs + "px " + fam;
+    var track = fs * 0.11;
+    var widths = [], total = 0, i;
+    for (i = 0; i < WORD.length; i++) {
+      var w = g.measureText(WORD[i]).width;
+      widths.push(w); total += w;
+    }
+    total += track * (WORD.length - 1);
+    var fit = (WW * 0.84) / total;
+    fs = fs * fit;
+    track = fs * 0.11;
+    g.font = "500 " + fs + "px " + fam;
+    widths = []; total = 0;
+    for (i = 0; i < WORD.length; i++) {
+      var w2 = g.measureText(WORD[i]).width;
+      widths.push(w2); total += w2;
+    }
+    total += track * (WORD.length - 1);
+    baseY = Math.round(WH * 0.5 + fs * 0.30);
+
+    var grad = g.createLinearGradient(0, baseY - fs * 0.80, 0, baseY + fs * 0.18);
+    grad.addColorStop(0.00, "#ffffff");
+    grad.addColorStop(0.14, "#e4effb");
+    grad.addColorStop(0.31, "#a2b6cf");
+    grad.addColorStop(0.41, "#f7fbff");
+    grad.addColorStop(0.56, "#7e93ae");
+    grad.addColorStop(0.70, "#dfeafa");
+    grad.addColorStop(0.86, "#b2c4da");
+    grad.addColorStop(1.00, "#8da1bb");
+    g.fillStyle = grad;
+    g.textBaseline = "alphabetic";
+    var x = (WW - total) / 2;
+    for (i = 0; i < WORD.length; i++) {
+      g.fillText(WORD[i], x, baseY);
+      x += widths[i] + track;
+    }
+
+    mask = make(WW, WH);
+    var m = mask.getContext("2d");
+    m.font = "500 " + fs + "px " + fam;
+    m.fillStyle = "#fff";
+    m.textBaseline = "alphabetic";
+    x = (WW - total) / 2;
+    for (i = 0; i < WORD.length; i++) {
+      m.fillText(WORD[i], x, baseY);
+      x += widths[i] + track;
+    }
+    maskData = m.getImageData(0, 0, WW, WH).data;
+
+    var bx0 = WW, by0 = WH, bx1 = 0, by1 = 0;
+    for (var y = 0; y < WH; y++) {
+      for (var xx = 0; xx < WW; xx++) {
+        if (maskData[(y * WW + xx) * 4 + 3] > 26) {
+          if (xx < bx0) bx0 = xx;
+          if (xx > bx1) bx1 = xx;
+          if (y < by0) by0 = y;
+          if (y > by1) by1 = y;
+        }
+      }
+    }
+    box = { x0: bx0, y0: by0, x1: bx1, y1: by1, cx: (bx0 + bx1) / 2, cy: (by0 + by1) / 2 };
+
+    // 柔光底
+    glow = make(WW / 2, WH / 2);
+    var gg = glow.getContext("2d");
+    gg.filter = "blur(9px)";
+    gg.drawImage(mask, 0, 0, WW / 2, WH / 2);
+    gg.filter = "none";
+    gg.globalCompositeOperation = "source-in";
+    gg.fillStyle = "rgba(158,196,255,0.95)";
+    gg.fillRect(0, 0, WW / 2, WH / 2);
+    gg.globalCompositeOperation = "source-over";
+
+    // 镜面倒影
+    reflH = Math.round(fs * 0.36);
+    refl = make(WW, reflH);
+    var rg = refl.getContext("2d");
+    rg.filter = "blur(11px)";
+    rg.setTransform(1, 0, 0, -1, 0, baseY);
+    rg.drawImage(word, 0, 0);
+    rg.setTransform(1, 0, 0, 1, 0, 0);
+    rg.filter = "none";
+    var fg = rg.createLinearGradient(0, 0, 0, reflH);
+    fg.addColorStop(0, "rgba(0,0,0,0.55)");
+    fg.addColorStop(0.32, "rgba(0,0,0,0.2)");
+    fg.addColorStop(0.82, "rgba(0,0,0,0)");
+    rg.globalCompositeOperation = "destination-in";
+    rg.fillStyle = fg;
+    rg.fillRect(0, 0, WW, reflH);
+    rg.globalCompositeOperation = "source-over";
+
+    glint = make(WW, WH);
+    gctx = glint.getContext("2d");
+  }
+
+  function coverage(p, bx0, by0, bx1, by1) {
+    var hit = 0, all = 0;
+    for (var y = Math.floor(by0); y < by1; y += 3) {
+      for (var x = Math.floor(bx0); x < bx1; x += 3) {
+        all++;
+        if (maskData[(y * WW + x) * 4 + 3] > 40) hit++;
+      }
+    }
+    return all ? hit / all : 0;
+  }
+
+  function buildShards(step, out) {
+    var pad = Math.max(8, (box.y1 - box.y0) * 0.06);
+    var x0 = box.x0 - pad, y0 = box.y0 - pad, x1 = box.x1 + pad, y1 = box.y1 + pad;
+    var cols = Math.max(2, Math.round((x1 - x0) / step));
+    var rows = Math.max(2, Math.round((y1 - y0) / step));
+    var cw = (x1 - x0) / cols, chh = (y1 - y0) / rows;
+    var grid = [], r, c;
+    for (r = 0; r <= rows; r++) {
+      grid[r] = [];
+      for (c = 0; c <= cols; c++) {
+        var jx = (c === 0 || c === cols) ? 0 : 0.42;
+        var jy = (r === 0 || r === rows) ? 0 : 0.42;
+        grid[r][c] = [x0 + c * cw + rnd(-jx, jx) * cw, y0 + r * chh + rnd(-jy, jy) * chh];
+      }
+    }
+    var list = [];
+    for (r = 0; r < rows; r++) {
+      for (c = 0; c < cols; c++) {
+        list.push([grid[r][c], grid[r][c + 1], grid[r + 1][c + 1], grid[r + 1][c]]);
+      }
+    }
+
+    var cxw = box.cx, cyw = box.cy;
+    var maxR = Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2)) / 2;
+    for (var s = 0; s < list.length; s++) {
+      var poly = list[s];
+      var px0 = 1e9, py0 = 1e9, px1 = -1e9, py1 = -1e9;
+      for (var k = 0; k < poly.length; k++) {
+        var v = poly[k];
+        if (v[0] < px0) px0 = v[0];
+        if (v[0] > px1) px1 = v[0];
+        if (v[1] < py0) py0 = v[1];
+        if (v[1] > py1) py1 = v[1];
+      }
+      var cov = coverage(poly, Math.max(0, px0), Math.max(0, py0), Math.min(WW, px1), Math.min(WH, py1));
+      if (cov < 0.05) continue;
+
+      var sw = Math.ceil(px1 - px0) + 8, sh = Math.ceil(py1 - py0) + 8;
+      var sc = make(sw, sh);
+      var sg = sc.getContext("2d");
+      sg.translate(4 - px0, 4 - py0);
+      sg.beginPath();
+      sg.moveTo(poly[0][0], poly[0][1]);
+      for (var q = 1; q < poly.length; q++) sg.lineTo(poly[q][0], poly[q][1]);
+      sg.closePath();
+      sg.clip();
+      sg.drawImage(word, 0, 0);
+      sg.globalCompositeOperation = "source-atop";
+      sg.fillStyle = Math.random() < 0.5 ? "rgba(104,148,208,0.12)" : "rgba(255,255,255,0.06)";
+      sg.fillRect(px0 - 4, py0 - 4, sw, sh);
+      sg.globalCompositeOperation = "source-atop";
+      var shd = sg.createLinearGradient(px0, py0, px1, py1);
+      shd.addColorStop(0, "rgba(150,188,230,0.24)");
+      shd.addColorStop(0.5, "rgba(255,255,255,0)");
+      shd.addColorStop(0.62, "rgba(255,255,255,0.10)");
+      shd.addColorStop(1, "rgba(118,154,198,0.20)");
+      sg.fillStyle = shd;
+      sg.fillRect(px0 - 4, py0 - 4, sw, sh);
+      sg.globalCompositeOperation = "source-atop";
+      sg.strokeStyle = "rgba(255,255,255," + rnd(0.14, 0.4).toFixed(2) + ")";
+      sg.lineWidth = rnd(0.9, 1.5);
+      sg.stroke();
+      sg.globalCompositeOperation = "source-over";
+      sg.setTransform(1, 0, 0, 1, 0, 0);
+
+      var fc = make(sw, sh);
+      var fg2 = fc.getContext("2d");
+      fg2.translate(4 - px0, 4 - py0);
+      fg2.beginPath();
+      fg2.moveTo(poly[0][0], poly[0][1]);
+      for (var fp = 1; fp < poly.length; fp++) fg2.lineTo(poly[fp][0], poly[fp][1]);
+      fg2.closePath();
+      var fgr = fg2.createLinearGradient(px0, py0, px1, py1);
+      fgr.addColorStop(0, "rgba(226,240,255,0.13)");
+      fgr.addColorStop(0.5, "rgba(150,188,228,0.03)");
+      fgr.addColorStop(1, "rgba(255,255,255,0.09)");
+      fg2.fillStyle = fgr;
+      fg2.fill();
+      fg2.strokeStyle = "rgba(214,236,255,0.14)";
+      fg2.lineWidth = 1.2;
+      fg2.stroke();
+      fg2.setTransform(1, 0, 0, 1, 0, 0);
+
+      var ccx = (px0 + px1) / 2, ccy = (py0 + py1) / 2;
+      var rr = Math.sqrt(Math.pow(ccx - cxw, 2) + Math.pow(ccy - cyw, 2)) / maxR;
+      var outAng = Math.atan2(ccy - cyw, ccx - cxw) + rnd(-0.4, 0.4);
+      if (rr < 0.12) outAng = rnd(0, 6.283);
+
+      out.push({
+        c: sc, f: fc, w: sw, h: sh, cx: ccx, cy: ccy,
+        ang: rnd(0, 6.283), r: rnd(0.2, 0.7),
+        rot0: rnd(-1.15, 1.15), sc0: rnd(0.8, 1.15),
+        delay: 0.1 + 0.75 * rr + rnd(0, 0.12), dur: rnd(0.9, 1.15),
+        sdir: outAng, dist: rnd(0.2, 0.66), spin: rnd(-1.4, 1.4),
+        depth: rnd(0.5, 1.3), gd: Math.random()
+      });
+    }
+  }
+
+  function buildFX() {
+    function dotSprite(rgb) {
+      var c = make(24, 24), g = c.getContext("2d");
+      var gg = g.createRadialGradient(12, 12, 0, 12, 12, 12);
+      gg.addColorStop(0, "rgba(" + rgb + ",1)");
+      gg.addColorStop(0.22, "rgba(" + rgb + ",0.85)");
+      gg.addColorStop(0.5, "rgba(" + rgb + ",0.22)");
+      gg.addColorStop(1, "rgba(" + rgb + ",0)");
+      g.fillStyle = gg;
+      g.fillRect(0, 0, 24, 24);
+      return c;
+    }
+    dotCold = dotSprite("222,240,255");
+    dotWarm = dotSprite("255,234,206");
+
+    flash = make(256, 256);
+    var fg = flash.getContext("2d");
+    var gf = fg.createRadialGradient(128, 128, 0, 128, 128, 128);
+    gf.addColorStop(0, "rgba(255,255,255,0.95)");
+    gf.addColorStop(0.18, "rgba(238,247,255,0.55)");
+    gf.addColorStop(0.46, "rgba(190,220,255,0.18)");
+    gf.addColorStop(1, "rgba(150,190,240,0)");
+    fg.fillStyle = gf;
+    fg.fillRect(0, 0, 256, 256);
+  }
+
+  function buildSparks() {
+    sparks.length = 0;
+    var n = W > 560 ? 110 : 78;
+    var nd = W > 560 ? 260 : 130;
+    for (var d0 = 0; d0 < nd; d0++) {
+      sparks.push({
+        dot: true,
+        a: rnd(0, 6.2832),
+        r0: rnd(0, 0.5),
+        sp: rnd(0.1, 0.42),
+        life: rnd(1.4, 2.4),
+        sz: rnd(0.7, 1.8),
+        warm: Math.random() < 0.24
+      });
+    }
+    for (var i = 0; i < n; i++) {
+      sparks.push({
+        a: rnd(0, 6.2832),
+        r0: rnd(0.3, 1.0),
+        sp: rnd(0.3, 0.95),
+        life: rnd(0.3, 0.62),
+        sz: rnd(0.5, 1.6),
+        warm: Math.random() < 0.22
+      });
+    }
+  }
+
+  function buildBG() {
+    bg = make(canvas.width, canvas.height);
+    var g = bg.getContext("2d");
+    var w = bg.width, h = bg.height;
+    g.fillStyle = "#000000";
+    g.fillRect(0, 0, w, h);
+
+
+    var vig = g.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.82);
+    vig.addColorStop(0, "rgba(0,0,0,0)");
+    vig.addColorStop(1, "rgba(0,0,0,0.52)");
+    g.fillStyle = vig;
+    g.fillRect(0, 0, w, h);
+  }
+
+  function buildDust() {
+    dust.length = 0;
+    var n = Math.round(clamp(W * 0.3, 200, 620));
+    for (var i = 0; i < n; i++) {
+      dust.push({
+        x: Math.random() * W, y: Math.random() * H,
+        r: 0.4 + Math.random() * 1.3, a: 0.12 + Math.random() * 0.4,
+        sp: 0.25 + Math.random() * 0.9, ph: Math.random() * 6.2832,
+        warm: Math.random() < 0.16, spark: Math.random() < 0.12,
+        vx: rnd(-0.07, 0.07), vy: rnd(-0.05, 0.05)
+      });
+    }
+  }
+
+  function resize() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    W = Math.max(1, frame.clientWidth);
+    H = Math.max(1, frame.clientHeight);
+    if (W * H * dpr * dpr > 2400000) dpr = Math.sqrt(2400000 / (W * H));
+    DPR = dpr;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    buildBG();
+    buildDust();
+    pinTop = hero.getBoundingClientRect().top + window.pageYOffset;
+    pinLen = Math.max(120, hero.offsetHeight - frame.offsetHeight);
+    progPrev = clamp((window.pageYOffset - pinTop) / pinLen, 0, 1);
+  }
+
+  function drawGlint(phase, alpha, wx, wy, k) {
+    if (alpha <= 0.01) return;
+    var bx = -0.5 * WW + phase * 1.95 * WW;
+    var bw = 460;
+    var x0 = Math.max(0, Math.floor(bx - bw * 0.55));
+    var x1 = Math.min(WW, Math.floor(bx + bw * 0.45));
+    var wpx = x1 - x0;
+    if (wpx <= 2) return;
+    gctx.globalCompositeOperation = "source-over";
+    gctx.clearRect(x0, 0, wpx + 2, WH);
+    gctx.drawImage(mask, x0, 0, wpx, WH, x0, 0, wpx, WH);
+    gctx.globalCompositeOperation = "source-in";
+    var grad = gctx.createLinearGradient(bx - bw / 2, 0, bx + bw / 2, 0);
+    grad.addColorStop(0, "rgba(255,255,255,0)");
+    grad.addColorStop(0.44, "rgba(255,255,255,0.32)");
+    grad.addColorStop(0.63, "rgba(255,255,255,0.92)");
+    grad.addColorStop(0.78, "rgba(206,232,255,0.4)");
+    grad.addColorStop(1, "rgba(255,255,255,0)");
+    gctx.fillStyle = grad;
+    gctx.fillRect(x0, 0, wpx + 2, WH);
+    gctx.globalCompositeOperation = "source-over";
+
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(glint, x0, 0, wpx, WH, wx + x0 * k, wy, wpx * k, WH * k);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  function draw(now) {
+    var sy = window.pageYOffset || document.documentElement.scrollTop;
+    var up = prevSy >= 0 && sy < prevSy - 2.5;
+    prevSy = sy;
+    var progNow = reduce.matches ? 0 : clamp((sy - pinTop) / pinLen, 0, 1);
+    var crossDown = progNow > 0.56 && progPrev <= 0.56;
+    prog = progNow;
+    var el = (now - t0) / 1000;
+    if (crossDown && !burstOn) { burstOn = true; burstAt = now; gatherOn = false; }
+    progPrev = progNow;
+    var ft = frame.getBoundingClientRect().top;
+    if (burstOn && (prog < 0.5 || (up && ft > -H * 0.42))) {
+      burstOn = false; burstAt = 0; sparks.length = 0;
+      gatherOn = true; gatherAt = now;
+    }
+    var b = burstOn ? clamp((now - burstAt) / burstDur, 0, 1) : 0;
+    tin = prog > 0.012 ? Math.max(el, 3.2) : el;
+
+    var targetGlyph = W / H < 0.95 ? Math.min(W * 0.8, 720) : Math.min(W * 0.72, 1060);
+    var k = targetGlyph / (box.x1 - box.x0);
+    var pull = clamp(prog / 0.56, 0, 1);
+    var gs = 1 + 0.006 * Math.sin(tin * 0.55) + 0.05 * pull * pull;
+    var gx = W / 2 + Math.sin(tin * 0.4) * 5;
+    var gy = H * 0.47 + Math.cos(tin * 0.33) * 4;
+    if (burstOn && sparks.length === 0) { burstCx = gx; burstCy = gy; buildSparks(); }
+    var wx = gx - box.cx * k * gs;
+    var wy = gy - box.cy * k * gs;
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = 1;
+    ctx.drawImage(bg, 0, 0);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    if (burstOn && b < 0.13) {
+      var shk = Math.pow(1 - b / 0.13, 1.6) * 17;
+      ctx.translate((Math.random() - 0.5) * shk, (Math.random() - 0.5) * shk);
+    }
+
+    var built = clamp((tin - 0.7) / 1.4, 0, 1);
+    var gRaw = 0;
+    if (gatherOn) {
+      gRaw = 1 - clamp((now - gatherAt) / gatherDur, 0, 1);
+      if (gRaw <= 0) { gatherOn = false; gRaw = 0; glintAt = now; }
+    }
+    var formA = gatherOn ? 1 - gRaw : 1;
+    var sol = clamp((tin - 2.55) / 0.75, 0, 1);
+    if (burstOn) sol = 0;
+    else if (gatherOn) sol = clamp((formA - 0.9) / 0.1, 0, 1);
+
+    // 反光：入场后首次，之后循环
+    var gAlpha = 0, gPhase = 0;
+    var cycle = 6.6, start = 2.9;
+    if (tin >= start) {
+      var tt = (tin - start) % cycle;
+      if (tt < 1.25) {
+        gPhase = tt / 1.25;
+        gAlpha = Math.sin(3.1416 * Math.min(1, gPhase)) * 1.05;
+      }
+    }
+    if (built < 0.9) gAlpha = 0;
+    if (gatherOn) gAlpha = 0;
+    else if (glintAt && now - glintAt < 640) {
+      var gp2 = (now - glintAt) / 640;
+      gPhase = gp2;
+      gAlpha = Math.sin(3.1416 * gp2) * 0.95;
+    }
+    var gSweep = wx + (-0.5 * WW + gPhase * 1.95 * WW) * k * gs;
+    var gBand = 0.3 * WW * k * gs;
+
+    ctx.globalCompositeOperation = "lighter";
+    var maxDim = Math.max(W, H);
+    hover += (hoverT - hover) * 0.11;
+    var drift = b > 0.5 ? clamp((b - 0.5) / 0.5, 0, 1) * 0.1 : 0;
+    if (pmInit) { pmx += (hmx - pmx) * 0.1; pmy += (hmy - pmy) * 0.1; }
+    var n = shards.length;
+    if (sol < 0.99) for (var i = 0; i < n; i++) {
+      var s = shards[i];
+      var app = clamp((tin - s.delay) / s.dur, 0, 1);
+      var e = app >= 1 ? 1 : 1 - Math.pow(2, -9 * app);
+      var px = wx + s.cx * k * gs;
+      var py = wy + s.cy * k * gs;
+      if (hover > 0.02 && built > 0.9 && b < 0.05) {
+        px += ((pmx - W * 0.5) / W) * 16 * s.depth * hover;
+        py += ((pmy - H * 0.47) / H) * 11 * s.depth * hover;
+        /* 鼠标排斥：靠近光标的碎片被轻轻推开，形成“拨开碎镜”的手感 */
+        var rdx = px - pmx, rdy = py - pmy;
+        var rd2 = rdx * rdx + rdy * rdy;
+        if (rd2 < 28900 && rd2 > 0.01) {
+          var rd = Math.sqrt(rd2);
+          var rf = 1 - rd / 170;
+          px += (rdx / rd) * rf * rf * 54 * hover;
+          py += (rdy / rd) * rf * rf * 54 * hover;
+        }
+      }
+      var rot = (1 - e) * s.rot0;
+      var scl = k * gs * (1 + (1 - e) * (s.sc0 - 1));
+
+      px += (1 - e) * Math.cos(s.ang) * s.r * maxDim;
+      py += (1 - e) * Math.sin(s.ang) * s.r * maxDim;
+
+      var fm = clamp((b - 0.05) / 0.5, 0, 1);
+      var f = fm * fm * (3 - 2 * fm);
+      var gi = 0;
+      if (gatherOn) { gi = clamp((gRaw - s.gd * 0.18) / 0.82, 0, 1); gi = gi * gi * (3 - 2 * gi); }
+      var d = (f * s.dist + drift) * maxDim;
+      if (gi > 0) d += gi * (0.12 + s.dist * 0.5) * maxDim;
+      px += Math.cos(s.sdir) * d;
+      py += Math.sin(s.sdir) * d;
+      rot += f * s.spin + gi * s.spin * 1.2;
+      scl *= 1 - 0.42 * f;
+      if (gi > 0) scl *= 0.84 + 0.16 * (1 - gi);
+      if (b > 0 && b < 0.05) scl *= 1 + 0.06 * (1 - b / 0.05);
+      if (b < 0.14) scl *= 1 + 0.16 * (1 - b / 0.14);
+
+      var alpha = (0.32 + 0.68 * e) * (1 - clamp((b - 0.42) / 0.38, 0, 1)) * (1 - 0.25 * clamp(b, 0, 1));
+      if (gi > 0) alpha *= 1 - 0.45 * gi;
+      alpha *= 1 - sol;
+      if (alpha < 0.01) continue;
+
+      var ov = 1 + 0.006 * e;
+      var fa = clamp((1 - e) * 0.8 + b * 0.35, 0, 0.55) * (1 - clamp((b - 0.16) / 0.46, 0, 1));
+      var stx = 1 + 1.15 * f * (1 - 0.55 * f);
+      var sty = 1 - 0.2 * f;
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(s.sdir);
+      ctx.scale(stx, sty);
+      ctx.rotate(-s.sdir + rot);
+      if (fa > 0.01) {
+        ctx.globalAlpha = fa;
+        ctx.drawImage(s.f, -s.w * scl / 2, -s.h * scl / 2, s.w * scl, s.h * scl);
+      }
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(s.c, -s.w * scl * ov / 2, -s.h * scl * ov / 2, s.w * scl * ov, s.h * scl * ov);
+      if (hover > 0.02 && built > 0.9 && b < 0.04) {
+        var hdx = px - pmx, hdy = py - pmy;
+        var hb = Math.exp(-(hdx * hdx + hdy * hdy) / 16000) * hover * 0.66;
+        if (hb > 0.02) {
+          ctx.globalAlpha = Math.min(1, hb);
+          ctx.drawImage(s.c, -s.w * scl * ov / 2, -s.h * scl * ov / 2, s.w * scl * ov, s.h * scl * ov);
+        }
+      }
+      if (gAlpha > 0.02) {
+        var gd = (px - gSweep) / gBand;
+        var gb = Math.exp(-gd * gd) * gAlpha * 0.85;
+        if (gb > 0.02) {
+          ctx.globalAlpha = Math.min(1, gb);
+          ctx.drawImage(s.c, -s.w * scl * ov / 2, -s.h * scl * ov / 2, s.w * scl * ov, s.h * scl * ov);
+        }
+      }
+      ctx.restore();
+
+      if (b > 0.02 && b < 0.5 && i % 11 === 3) {
+        var gl = Math.pow(Math.sin(tin * 9.1 + i * 2.3), 2) * (1 - b / 0.5);
+        if (gl > 0.05) {
+          var sl = (5 + 9 * gl) * (0.5 + 0.5 * f);
+          ctx.globalCompositeOperation = "lighter";
+          ctx.globalAlpha = gl * 0.9;
+          ctx.strokeStyle = "rgba(255,255,255,1)";
+          ctx.lineWidth = 1.1;
+          ctx.beginPath();
+          ctx.moveTo(px - sl, py); ctx.lineTo(px + sl, py);
+          ctx.moveTo(px, py - sl); ctx.lineTo(px, py + sl);
+          ctx.stroke();
+          ctx.globalAlpha = gl;
+          ctx.fillStyle = "rgba(255,255,255,1)";
+          ctx.beginPath();
+          ctx.arc(px, py, 1.1, 0, 6.2832);
+          ctx.fill();
+          ctx.globalCompositeOperation = "source-over";
+        }
+      }
+
+      var ea = clamp((b - 0.6) / 0.36, 0, 1);
+      if (ea > 0.01) {
+        var ex = wx + s.cx * k * gs + Math.cos(s.sdir) * (f * s.dist + drift) * maxDim;
+        var ey = wy + s.cy * k * gs + Math.sin(s.sdir) * (f * s.dist + drift) * maxDim;
+        ctx.globalAlpha = ea * (0.6 + 0.4 * Math.sin(tin * 1.6 + i)) * 0.9;
+        ctx.fillStyle = "rgba(216,234,255,1)";
+        ctx.beginPath();
+        ctx.arc(ex, ey, 1.5, 0, 6.2832);
+        ctx.fill();
+      }
+    }
+    if (sol > 0.01) {
+      ctx.globalCompositeOperation = "source-over";
+      var wordW = WW * k * gs, wordH = WH * k * gs;
+      var inWord = pmx > wx - 40 && pmx < wx + wordW + 40 && pmy > wy - 40 && pmy < wy + wordH + 40;
+      var lensOn = hover > 0.02 && built > 0.9 && b < 0.05 && pmInit && inWord;
+      var lensR = 40 + 22 * hover;
+      if (lensOn) {
+        if (!lensSeed.length || now - lensAt > 1400) { buildLensSeed(); lensAt = now; }
+        /* 鼠标罩住的那一小块（不规则碎片形）：实心字挖空，换成被拨开的碎片 */
+        ctx.save();
+        ctx.globalAlpha = sol;
+        ctx.beginPath();
+        ctx.rect(0, 0, W, H);
+        lensTrace(ctx, pmx, pmy, lensR, tin);
+        ctx.clip("evenodd");
+        ctx.drawImage(word, wx, wy, wordW, wordH);
+        ctx.restore();
+        ctx.save();
+        ctx.beginPath();
+        lensTrace(ctx, pmx, pmy, lensR, tin);
+        ctx.clip();
+        /* 与炸开阶段同源的镜片碎片（更细一步网格），在透镜内被鼠标拨开 */
+        var sc = k * gs;
+        for (var li = 0; li < lensShards.length; li++) {
+          var ls = lensShards[li];
+          var lpx = wx + ls.cx * sc, lpy = wy + ls.cy * sc;
+          var ldx = lpx - pmx, ldy = lpy - pmy;
+          var ld = Math.sqrt(ldx * ldx + ldy * ldy) || 1;
+          if (ld > lensR * 1.35) continue;
+          var lf = clamp(1 - ld / (lensR * 1.35), 0, 1);
+          lpx += (ldx / ld) * lf * lf * 30;
+          lpy += (ldy / ld) * lf * lf * 30;
+          ctx.save();
+          ctx.translate(lpx, lpy);
+          ctx.rotate(lf * ls.spin * 0.3);
+          ctx.globalAlpha = sol * (0.65 + 0.35 * lf);
+          ctx.drawImage(ls.c, -ls.w * sc / 2, -ls.h * sc / 2, ls.w * sc, ls.h * sc);
+          if (lf > 0.3) {
+            ctx.globalAlpha = sol * lf * 0.25;
+            ctx.drawImage(ls.f, -ls.w * sc / 2, -ls.h * sc / 2, ls.w * sc, ls.h * sc);
+          }
+          ctx.restore();
+        }
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.globalAlpha = sol;
+        ctx.drawImage(word, wx, wy, wordW, wordH);
+        ctx.globalAlpha = 1;
+      }
+    }
+    if (burstOn) {
+      ctx.globalCompositeOperation = "lighter";
+      var bt2 = b * burstDur / 1000;
+      var halfW = WW * k * gs * 0.5, halfH = WH * k * gs * 0.5;
+      for (var sk2 = 0; sk2 < sparks.length; sk2++) {
+        var sk3 = sparks[sk2];
+        var u3 = bt2 / sk3.life;
+        if (u3 >= 1) continue;
+        if (sk3.dot) {
+          var qd = 1 - Math.pow(1 - u3, 1.8);
+          var cad = Math.cos(sk3.a), sad = Math.sin(sk3.a) * 0.6;
+          var exd = burstCx + cad * (halfW * sk3.r0 + sk3.sp * maxDim * qd);
+          var eyd = burstCy + sad * (halfH * sk3.r0 + sk3.sp * maxDim * qd);
+          var ad = Math.pow(1 - u3, 1.7) * (1 - clamp((b - 0.5) / 0.5, 0, 1));
+          var dr = sk3.sz * 4.2;
+          ctx.globalAlpha = ad * 0.95;
+          ctx.drawImage(sk3.warm ? dotWarm : dotCold, exd - dr, eyd - dr, dr * 2, dr * 2);
+          continue;
+        }
+        var q3 = 1 - Math.pow(1 - u3, 2.4);
+        var ca3 = Math.cos(sk3.a), sa3 = Math.sin(sk3.a) * 0.56;
+        var ex3 = burstCx + ca3 * (halfW * sk3.r0 + sk3.sp * maxDim * q3);
+        var ey3 = burstCy + sa3 * (halfH * sk3.r0 + sk3.sp * maxDim * q3);
+        var ln3 = (10 + sk3.sp * 32) * (0.3 + 0.7 * u3) * (1 - u3);
+        ctx.globalAlpha = Math.pow(1 - u3, 1.5) * 0.92;
+        ctx.strokeStyle = sk3.warm ? "rgba(255,228,196,1)" : "rgba(222,240,255,1)";
+        ctx.lineWidth = sk3.sz * (1 - u3) + 0.35;
+        ctx.beginPath();
+        ctx.moveTo(ex3 - ca3 * ln3, ey3 - sa3 * ln3);
+        ctx.lineTo(ex3, ey3);
+        ctx.stroke();
+        ctx.globalAlpha = Math.pow(1 - u3, 2) * 0.92;
+        ctx.fillStyle = sk3.warm ? "rgba(255,240,214,1)" : "rgba(240,250,255,1)";
+        ctx.beginPath();
+        ctx.arc(ex3, ey3, sk3.sz * 0.85 + 0.3, 0, 6.2832);
+        ctx.fill();
+      }
+      if (flash) {
+        var fp = clamp(b / 0.32, 0, 1);
+        var fr = maxDim * (0.16 + fp * 1.0);
+        ctx.globalAlpha = 0.7 * Math.pow(1 - fp, 2.6);
+        ctx.drawImage(flash, burstCx - fr, burstCy - fr * 0.6, fr * 2, fr * 0.6 * 2);
+      }
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+
+    if (burstOn && b < 0.12) {
+      var fl = 1 - b / 0.12;
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = 0.3 * fl * fl;
+      var fw = WW * k * gs * 1.06, fh = WH * k * gs * 1.06;
+      ctx.drawImage(glow, wx - (fw - WW * k * gs) / 2, wy - (fh - WH * k * gs) / 2, fw, fh);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    if (glintAt && !gatherOn && now - glintAt < 260) {
+      var cp = (now - glintAt) / 260;
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = 0.18 * Math.pow(1 - cp, 2.2);
+      var cw = WW * k * 1.05 * gs, chh2 = WH * k * 1.05 * gs;
+      ctx.drawImage(glow, wx - (cw - WW * k * gs) / 2, wy - (chh2 - WH * k * gs) / 2, cw, chh2);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    drawGlint(gPhase, gAlpha * Math.max(0, 1 - b * 2.6), wx, wy, k * gs);
+
+    ctx.globalCompositeOperation = "lighter";
+    for (var d2 = 0; d2 < dust.length; d2++) {
+      var du = dust[d2];
+      if (!reduce.matches) {
+        du.x += du.vx + Math.sin(tin * 0.35 + du.ph) * 0.05;
+        du.y += du.vy + Math.cos(tin * 0.28 + du.ph) * 0.04;
+        if (du.x < -8) du.x = W + 6; else if (du.x > W + 8) du.x = -6;
+        if (du.y < -8) du.y = H + 6; else if (du.y > H + 8) du.y = -6;
+      }
+      var da = du.a * (0.55 + 0.45 * Math.sin(tin * du.sp * 2.4 + du.ph));
+      var ddx = du.x, ddy = du.y, dnear = 0;
+      if (hover > 0.02 && pmInit) {
+        var mdx = du.x - pmx, mdy = du.y - pmy;
+        var md = Math.sqrt(mdx * mdx + mdy * mdy) || 1;
+        if (md < 175) {
+          var mf = 1 - md / 175;
+          dnear = mf;
+          ddx += (mdx / md) * mf * mf * 30 + (-mdy / md) * mf * 9 + (hmx - pmx) * mf * 0.6;
+          ddy += (mdy / md) * mf * mf * 30 + (mdx / md) * mf * 9 + (hmy - pmy) * mf * 0.6;
+          da += mf * 0.55 * hover;
+        }
+      }
+      ctx.globalAlpha = clamp(da, 0, 0.95);
+      ctx.fillStyle = du.warm ? "rgba(255,226,196,1)" : "rgba(214,232,255,1)";
+      ctx.beginPath();
+      ctx.arc(ddx, ddy, du.r + dnear * 0.8, 0, 6.2832);
+      ctx.fill();
+      if (du.spark) {
+        var dsl = du.r * (2.4 + dnear * 5);
+        ctx.globalAlpha = clamp(da * 0.6, 0, 0.85);
+        ctx.strokeStyle = du.warm ? "rgba(255,226,196,1)" : "rgba(214,232,255,1)";
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(ddx - dsl, ddy); ctx.lineTo(ddx + dsl, ddy);
+        ctx.moveTo(ddx, ddy - dsl); ctx.lineTo(ddx, ddy + dsl);
+        ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  function loop(now) {
+    raf = 0;
+    if (!visible || !inView) return;
+    draw(now);
+    raf = requestAnimationFrame(loop);
+  }
+  function kick() {
+    if (!raf && visible && inView) raf = requestAnimationFrame(loop);
+  }
+
+  function boot() {
+    buildWord();
+    buildFX();
+    buildShards(38, shards);
+    buildShards(16, lensShards);
+    resize();
+    booted = true;
+    t0 = performance.now();
+    draw(performance.now());
+    if (!reduce.matches) kick();
+  }
+
+  var rt = 0;
+  window.addEventListener("resize", function () {
+    clearTimeout(rt);
+    rt = setTimeout(function () {
+      resize();
+      if (reduce.matches && booted) draw(performance.now());
+    }, 120);
+  });
+  window.addEventListener("scroll", function () {
+    if (!raf && visible && inView && !reduce.matches) kick();
+  }, { passive: true });
+  document.addEventListener("visibilitychange", function () {
+    visible = !document.hidden;
+    if (reduce.matches) return;
+    if (visible) kick();
+  });
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function (e) {
+      inView = e[0].isIntersecting;
+      if (reduce.matches) return;
+      if (inView) kick();
+    }, { threshold: 0 }).observe(frame);
+  }
+  reduce.addEventListener?.("change", function () {
+    if (reduce.matches) { if (raf) cancelAnimationFrame(raf); raf = 0; draw(performance.now()); }
+    else kick();
+  });
+
+  boot();
+})();
+</script>
+
+<script src="landing-fx.js?v=5"></script>
+</body>
 </html>

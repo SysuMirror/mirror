@@ -30,3 +30,9 @@ __pycache__/
 *.pyc
 ._*
 web/dist.bak-*/
+
+# Node 后端 / Svelte 前端
+frontend/node_modules/
+web/app/
+*.db-wal
+*.db-shm

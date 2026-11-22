@@ -1,0 +1,314 @@
+/* 沕鉴 Mirror 首页增强：黑色星空 + 碎片光标 + 漂浮小 Mirror。
+   选择器收在 .hm-fx / .hm-star 命名空间；.hm-star 在 landing-fx.css 里晚于设计稿内联样式，
+   通过重定义局部 CSS 变量把白底版块整体翻成星空黑，文字/边框自动跟随。 */
+
+/* ---------------- 碎片光标（原创造型，非圆环） ---------------- */
+html.hm-fx-cursor-on,
+html.hm-fx-cursor-on * { cursor: none !important; }
+
+.hm-fx-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
+  --a: 0deg;
+  --spread: 0;
+  --glow: .35;
+}
+.hm-fx-cursor .hm-fx-glow {
+  position: absolute;
+  left: -22px;
+  top: -22px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(126, 170, 255, var(--glow)) 0%, transparent 68%);
+  filter: blur(2px);
+  transition: opacity .25s ease;
+}
+.hm-fx-shard {
+  position: absolute;
+  background: linear-gradient(135deg, #f7fbff 0%, #a2b6cf 38%, #f7fbff 52%, #7e93ae 78%, #dfeafa 100%);
+  clip-path: polygon(50% 0%, 100% 36%, 80% 100%, 14% 88%, 0% 30%);
+  filter: drop-shadow(0 0 3px rgba(126, 170, 255, .55));
+  will-change: transform;
+}
+.hm-fx-shard.s0 {
+  left: -9px;
+  top: -11px;
+  width: 18px;
+  height: 22px;
+  transform: rotate(var(--a)) scale(calc(1 + var(--spread) * .35));
+  transition: transform .18s cubic-bezier(.22, .61, .36, 1);
+}
+.hm-fx-shard.s1,
+.hm-fx-shard.s2 {
+  width: 9px;
+  height: 11px;
+  opacity: calc(.25 + var(--spread) * .75);
+  transition: transform .22s cubic-bezier(.22, .61, .36, 1), opacity .22s ease;
+}
+.hm-fx-shard.s1 {
+  left: -4px;
+  top: -5px;
+  transform: translate(calc(var(--spread) * -16px), calc(var(--spread) * -13px)) rotate(calc(var(--a) * -1.6));
+}
+.hm-fx-shard.s2 {
+  left: -4px;
+  top: -5px;
+  transform: translate(calc(var(--spread) * 15px), calc(var(--spread) * 12px)) rotate(calc(var(--a) * 1.9 + 40deg));
+}
+/* 悬停可交互：碎片炸开成三片 */
+.hm-fx-cursor.is-active { --spread: 1; --glow: .6; }
+/* 按下：碎片收拢 */
+.hm-fx-cursor.is-down { --spread: .15; --glow: .8; }
+.hm-fx-cursor.is-down .hm-fx-shard.s0 { transform: rotate(var(--a)) scale(.8); }
+/* 首屏碎镜区：光标更亮、缓慢自旋 */
+.hm-fx-cursor.is-hero { --glow: .7; }
+.hm-fx-cursor.is-hero .hm-fx-shard.s0 { animation: hm-fx-idle 5s linear infinite; }
+@keyframes hm-fx-idle { to { transform: rotate(calc(var(--a) + 360deg)) scale(1.05); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-fx-cursor.is-hero .hm-fx-shard.s0 { animation: none; }
+}
+
+/* ---------------- 星空版块主题 ---------------- */
+.hm-star {
+  /* 局部重定义设计稿变量：文字/边框/次要色整体翻亮 */
+  --hm-ink: #f2f6fc;
+  --hm-ink-2: rgba(226, 234, 246, .66);
+  --hm-ink-3: rgba(226, 234, 246, .45);
+  --hm-line: rgba(255, 255, 255, .12);
+  --hm-brand: #7ea2ff;
+  --hm-brand-deep: #a9c4ff;
+  position: relative;
+  color: var(--hm-ink);
+  background:
+    radial-gradient(120% 80% at 18% 0%, rgba(47, 107, 255, .12), transparent 55%),
+    radial-gradient(100% 70% at 85% 100%, rgba(126, 170, 255, .08), transparent 60%),
+    #04070d;
+}
+.hm-star .hm-apps__item,
+.hm-star .hm-foundation__figure {
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid rgba(255, 255, 255, .08);
+}
+.hm-star .hm-apps__mark { color: #f2f6fc; }
+.hm-star .hm-apps__item:hover .hm-apps__name { color: #a9c4ff; }
+.hm-star .hm-pitch__down button {
+  background: rgba(255, 255, 255, .06);
+  border-color: rgba(255, 255, 255, .22);
+  color: #fff;
+}
+.hm-star .hm-pitch__down button:hover {
+  background: rgba(255, 255, 255, .14);
+  border-color: #fff;
+}
+.hm-star .hm-feature__sub,
+.hm-star .hm-service__num { color: #7ea2ff; }
+.hm-star .hm-rise__media { box-shadow: 0 18px 48px rgba(0, 0, 0, .5); }
+.hm-star .hm-eco__card { box-shadow: 0 24px 64px rgba(0, 0, 0, .55); }
+
+/* 粒子画布铺在版块底层，内容浮在其上 */
+.hm-fx-host { position: relative; }
+.hm-fx-host > .hm-container { position: relative; z-index: 1; }
+.hm-fx-field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  display: block;
+}
+
+/* ---------------- 底部口号带 ---------------- */
+.hm-slogan {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(100% 90% at 50% 0%, rgba(47, 107, 255, .14), transparent 60%),
+    #04070d;
+  color: #fff;
+  padding: clamp(76px, 9vw, 132px) 0;
+  text-align: center;
+}
+.hm-slogan .hm-container { position: relative; z-index: 1; }
+.hm-slogan__kicker {
+  font-size: 11.5px;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .42);
+  margin-bottom: 24px;
+}
+.hm-slogan__line {
+  font-size: clamp(28px, 4.6vw, 58px);
+  font-weight: 800;
+  letter-spacing: .02em;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+.hm-slogan__line em {
+  font-style: normal;
+  background: linear-gradient(92deg, #7ea2ff 0%, #d6e8ff 55%, #7ea2ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hm-slogan__rule {
+  width: 72px;
+  height: 2px;
+  margin: 28px auto 0;
+  background: linear-gradient(90deg, transparent, #2f6bff, transparent);
+}
+.hm-slogan__sub {
+  margin-top: 20px;
+  font-size: 13px;
+  letter-spacing: .1em;
+  color: rgba(255, 255, 255, .5);
+}
+@media (max-width: 640px) {
+  .hm-slogan__kicker { letter-spacing: .18em; font-size: 10px; }
+  .hm-slogan__sub { font-size: 12px; }
+}
+/* ---------------- 按钮去背景去边框（需求广场 / 进入需求大厅 等） ---------------- */
+.hm-btn,
+.hm-btn--lg {
+  height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--nav-fg, #fff);
+  font-weight: 600;
+  position: relative;
+  transform: none !important;
+}
+.hm-btn::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: -4px;
+  height: 1.5px;
+  background: currentColor;
+  transition: right .28s cubic-bezier(.22, .61, .36, 1);
+}
+.hm-btn:hover { background: none !important; color: #7ea2ff; }
+.hm-btn:hover::after { right: 0; }
+.hm-star .hm-btn { color: #a9c4ff; }
+.hm-star .hm-btn:hover { color: #fff; }
+.hm-mobile .hm-btn { margin: 16px var(--hm-gutter) 0; }
+
+/* ---------------- 方框优化：圆形图标钮 + 非纯矩形卡片 ---------------- */
+/* 向下箭头 / 生态切换：正方框 -> 圆形玻璃钮 */
+.hm-pitch__down button,
+.hm-eco__nav button {
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, .06) !important;
+  border: 1px solid rgba(255, 255, 255, .18) !important;
+  color: #fff !important;
+  backdrop-filter: blur(4px);
+}
+.hm-pitch__down button:hover,
+.hm-eco__nav button:hover {
+  background: rgba(126, 170, 255, .18) !important;
+  border-color: rgba(126, 170, 255, .6) !important;
+  transform: translateY(2px);
+}
+/* 卡片/容器：圆角 + 不对称切角，避免纯矩形 */
+.hm-eco__card { border-radius: 22px 8px 22px 8px !important; }
+.hm-rise__media { border-radius: 18px 6px 18px 6px !important; }
+.hm-rise__card--phone .hm-rise__media { border-radius: 26px !important; }
+.hm-phone { border-radius: 22px !important; }
+.hm-window { border-radius: 14px 6px 14px 6px !important; }
+.hm-apps__item { border-radius: 20px 8px 20px 8px !important; }
+.hm-foundation__figure { border-radius: 24px 10px 24px 10px !important; }
+.hm-topology__stage { border-radius: 20px !important; }
+.hm-about__grid > * { border-radius: 16px; }
+
+/* 首屏以下全是深色星空，导航 solid 态改成深色玻璃，避免白条破坏沉浸 */
+.hm-nav.is-solid {
+  --nav-fg: #f2f6fc;
+  --nav-fg2: rgba(226, 234, 246, .6);
+  --nav-line: rgba(255, 255, 255, .12);
+  --nav-accent: #7ea2ff;
+  background: rgba(4, 7, 13, .82);
+  border-bottom-color: rgba(255, 255, 255, .1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
+}
+
+/* 横向漫游圆点：可点击切换 */
+.hm-gallery__dots i { cursor: pointer; pointer-events: auto; transition: all .25s var(--hm-ease); }
+.hm-gallery__dots i:hover { background: rgba(255, 255, 255, .65); transform: scale(1.35); }
+.hm-gallery__dots i:focus-visible { outline: 2px solid #7ea2ff; outline-offset: 3px; }
+
+/* ---------------- 标题字体：衬线 + 斜体，编辑感 / 高级感 ---------------- */
+/* 不引第三方字体 CDN：用系统衬线栈（思源宋体/宋体/Georgia），中文斜体由浏览器合成 oblique。
+   覆盖所有“大标题”类：版块头 / 标语 / 画廊 / 沉浸 / 关于 / 口号 / 生态产品名。 */
+.hm-sec-head h2,
+.hm-pitch h2,
+.hm-gallery__head h2,
+.hm-about h2,
+.hm-immersive__title,
+.hm-slogan__line,
+.hm-eco__title {
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Source Han Serif CN", "Songti SC", "STSong", "SimSun", Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: .015em;
+  font-synthesis: weight style;
+}
+/* 斜体下逐字飞入的字符间距微调，避免挤在一起 */
+.hm-split__ch { letter-spacing: .01em; }
+/* 口号渐变字保持渐变，仅换族/斜体 */
+.hm-slogan__line em { font-style: italic; }
+
+/* ---------------- 画廊改手动轮播：不占 500vh、不滚动整页 ---------------- */
+.hm-gallery { height: auto; }
+.hm-gallery__pin { position: relative; top: auto; height: auto; display: flex; flex-direction: column; padding-bottom: 8px; }
+.hm-gallery__stage { flex: none; height: min(66vh, 720px); }
+.hm-slide, .hm-slide figcaption { transition: opacity .55s var(--hm-ease), transform .55s var(--hm-ease); }
+.hm-gallery__ctrl { display: flex; align-items: center; justify-content: center; gap: 18px; padding: 18px var(--hm-gutter) 26px; }
+.hm-gallery__ctrl .hm-gallery__dots { padding: 0; }
+.hm-gallery__arrow {
+  width: 42px; height: 42px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.06);
+  color: #fff; font-size: 16px; display: grid; place-items: center; cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+}
+.hm-gallery__arrow:hover { background: rgba(126,170,255,.18); border-color: rgba(126,170,255,.6); transform: translateY(-1px); }
+.hm-gallery__arrow:focus-visible { outline: 2px solid #7ea2ff; outline-offset: 3px; }
+
+/* 顶栏 / 页脚 品牌字：衬线 + 斜体，与全站大标题统一 */
+.hm-logo,
+.hm-footer .hm-logo {
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Source Han Serif CN", "Songti SC", "STSong", "SimSun", Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.hm-logo em, .hm-footer .hm-logo em { font-style: italic; }
+
+/* 品牌 logo 图（标题左侧） */
+.hm-logo { display: flex; align-items: center; gap: 10px; }
+.hm-logo__img { width: 30px; height: 30px; object-fit: contain; display: block; flex: none; }
+.hm-footer .hm-logo .hm-logo__img { width: 26px; height: 26px; }
+
+/* 次级标题 / 产品名 / 卡片 caption：统一衬线斜体 */
+.hm-rise__cap b,
+.hm-apps__name,
+.hm-feature h3,
+.hm-service-row h3,
+.hm-slide__title,
+.hm-top-node__title,
+.hm-topology__core-label {
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Source Han Serif CN", "Songti SC", "STSong", "SimSun", Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: .015em;
+}

@@ -1,0 +1,1037 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/logo.png">
+  <link rel="icon" href="/img/logo.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#0b1220">
+  <meta name="author" content="ssemarket">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="SSEMARKET官方博客">
+<meta property="og:type" content="website">
+<meta property="og:title" content="SSEMARKET官方博客">
+<meta property="og:url" content="https://ssemarket.cn/index.html">
+<meta property="og:site_name" content="SSEMARKET官方博客">
+<meta property="og:description" content="SSEMARKET官方博客">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="ssemarket">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>SSEMARKET官方博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/ssemarket.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"ssemarket.cn","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#2c3d56","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"CtaAJ5nQF8g8JbfZWSskyr0d-gzGzoHsz","app_key":"sutATn1j5AgAy98sVzflnzAI","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.2.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 78vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>SSEMARKET</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>博客</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/join/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>招新</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/banner.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.22)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="软工集市官方博客
+软工人定义的世界"></span>
+          
+        </div>
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      <div class="container nopadding-x-md">
+        <div id="board"
+          >
+          
+          <div class="container">
+            <div class="row">
+              <div class="col-12 col-md-10 m-auto">
+                
+
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/08/20/%E8%BD%AF%E5%B7%A5%E9%9B%86%E5%B8%82%E5%B9%B3%E5%8F%B0%E7%9F%A9%E9%98%B5/" target="_self">
+          软工集市平台矩阵：我们现在在做的事
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/08/20/%E8%BD%AF%E5%B7%A5%E9%9B%86%E5%B8%82%E5%B9%B3%E5%8F%B0%E7%9F%A9%E9%98%B5/" target="_self">
+        <div>
+          如果还有人问软工集市是什么，2023 年的标准答案是「学院SSE_MARKET」。2026 年夏天的答案要长一点：它是一套挂在同一域名下、尽量共用账号的小产品集群——SSE_MARKET仍是客厅，旁边已经长出知识库、部署台、图床和模型管理。 现在对外亮相的几块主站继续承担发帖、课程区、通知和工作台。iWiki 负责可协作、可检索、可交接的长文档，并带 CodeWiki 这类偏工程的能力。SSE D
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-08-20 15:00" pubdate>
+              2026-08-20
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%9B%E5%B1%95/" class="category-chain-item">进展</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E5%B9%B3%E5%8F%B0/">#平台</a>
+            
+              <a href="/tags/%E8%BF%9B%E5%B1%95/">#进展</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/08/17/%E5%BC%80%E6%94%BE%E5%B8%96%E5%AD%90%E7%BD%AE%E9%A1%B6/" target="_self">
+          开放帖子置顶
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/08/17/%E5%BC%80%E6%94%BE%E5%B8%96%E5%AD%90%E7%BD%AE%E9%A1%B6/" target="_self">
+        <div>
+          信息流天然喜新厌旧。公告、招新、重要修复，发完第二天就沉底，只靠群里反复转发很丢人。2026 年八月十七日，主站开放置顶：该留在顶上的帖，可以名正言顺留一阵。 置顶是权力，也是责任开放不等于谁都能把广告钉死。权限会落在管理与约定好的角色上，过期与撤销也要可预期，否则置顶会比热榜更伤公平。对读者，置顶应该是「现在进集市先看这个」；对写作者，它不是刷存在感的捷径，而是把真正影响全员的信息从噪声里捞出来
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-08-17 14:10" pubdate>
+              2026-08-17
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%9B%E5%B1%95/" class="category-chain-item">进展</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E8%BF%9B%E5%B1%95/">#进展</a>
+            
+              <a href="/tags/%E4%B8%BB%E7%AB%99/">#主站</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/08/16/%E5%B7%A5%E4%BD%9C%E5%8F%B0%E4%B8%8A%E7%BA%BF/" target="_self">
+          工作台上线：欢迎把服务部署到集市
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/08/16/%E5%B7%A5%E4%BD%9C%E5%8F%B0%E4%B8%8A%E7%BA%BF/" target="_self">
+        <div>
+          主站又一次凌晨更新。表面上是图片预览、列表摘要字数和布局微调；真正想宣布的是：工作台。子服务不再东一条西一条藏在口令里，而是被归到一个同学找得到的入口，并且明确喊话——你有好玩的服务，可以部署到集市，让别人也用上。 从SSE_MARKET到「可挂载的校园云」四千贴之后，集市反复被问：服务器还有空吗、能不能挂我的小工具、OAuth 怎么接。Deploy 解决「怎么挂」，工作台解决「挂完谁看得见」。g
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-08-16 02:50" pubdate>
+              2026-08-16
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%9B%E5%B1%95/" class="category-chain-item">进展</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E9%83%A8%E7%BD%B2/">#部署</a>
+            
+              <a href="/tags/%E4%B8%BB%E7%AB%99/">#主站</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/08/15/%E5%9B%BE%E5%BA%8A%E4%B8%8A%E7%BA%BF/" target="_self">
+          图床上线：博客与脚本都能用
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/08/15/%E5%9B%BE%E5%BA%8A%E4%B8%8A%E7%BA%BF/" target="_self">
+        <div>
+          写博客、写 Wiki、发主站长帖，第一步卡点经常是图。外部免费图床今天能用明天改规则，商业图床又要单独账号。集市图床要做的事很朴素：登录用集市账号，上传后拿到稳定直链，最好还能给脚本和编辑器调用。 给人用的界面，给机器用的 Token网页端解决「我现在有一张截图」。开发者还能在 Token 页创建个人密钥，只显示一次原文，之后用于 Typora、PicGo、Obsidian 或自己的上传脚本。接口
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-08-15 12:00" pubdate>
+              2026-08-15
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%9B%E5%B1%95/" class="category-chain-item">进展</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E5%B9%B3%E5%8F%B0/">#平台</a>
+            
+              <a href="/tags/%E5%9B%BE%E5%BA%8A/">#图床</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/08/14/%E7%94%A8AI%E8%AE%BE%E8%AE%A1%E5%87%BA%E9%9B%86%E5%B8%82%E8%99%9A%E6%8B%9F%E5%BD%A2%E8%B1%A1/" target="_self">
+          用 AI 设计出集市虚拟形象
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/08/14/%E7%94%A8AI%E8%AE%BE%E8%AE%A1%E5%87%BA%E9%9B%86%E5%B8%82%E8%99%9A%E6%8B%9F%E5%BD%A2%E8%B1%A1/" target="_self">
+        <div>
+          软工集市终于有一张「被人认出来」的脸。不是又一张六边形 logo，而是一个能站在招新海报、空状态和活动视觉里的二次元角色：浅蓝长发，学院风外套，背包挂着代码感挂件，手边是贴着集市标志的笔记本——一看就在编程，也一看就没睡饱。 为什么SSE_MARKET也需要形象Logo 解决识别，形象解决感情。集市从SSE_MARKET长到 Wiki、部署、图床，对外说话的场合变多了：迎新、汇报、空页面、404、
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-08-14 22:10" pubdate>
+              2026-08-14
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%9B%E5%B1%95/" class="category-chain-item">进展</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E8%BF%9B%E5%B1%95/">#进展</a>
+            
+              <a href="/tags/%E5%BD%A2%E8%B1%A1/">#形象</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/08/13/2026%E8%BD%AF%E5%B7%A5%E9%9B%86%E5%B8%82%E6%8B%9B%E6%96%B0/" target="_self">
+          2026 软工集市招新
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/08/13/2026%E8%BD%AF%E5%B7%A5%E9%9B%86%E5%B8%82%E6%8B%9B%E6%96%B0/" target="_self">
+        <div>
+          2026 年八月中旬，集市又发出一轮招募。对象写得很宽：新大一、大二，以及所有对集市感兴趣的人。门槛依旧不高，但角色画像比往年更清楚——我们缺的不只是会写代码的人，更缺能把平台当产品扛住的人。 先说最缺的：产品与运营集市有天然用户场，适合迎新、问答、活动节点，可这些事最终常常落到「另开新平台」或「没人跟学院对接」。我们需要能出主意、能约老师、能盯经费与时间点的同学，把集市真正当产品运营。这活技术含
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-08-13 14:40" pubdate>
+              2026-08-13
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%8B%9B%E6%96%B0/" class="category-chain-item">招新</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E6%8B%9B%E6%96%B0/">#招新</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/08/09/SSE-Git%E9%83%A8%E7%BD%B2%E5%B9%B3%E5%8F%B0%E5%86%85%E6%B5%8B/" target="_self">
+          SSE Deploy 部署平台内测
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/08/09/SSE-Git%E9%83%A8%E7%BD%B2%E5%B9%B3%E5%8F%B0%E5%86%85%E6%B5%8B/" target="_self">
+        <div>
+          学院里最反复的对话之一是：「我服务写好了，挂哪儿给别人用？」自己的云主机贵、教室机房乱、临时目录更不敢托付。SSE Deploy 要回答的就是这件事：绑定你在 Gitee 或 GitHub 上的仓库，选分支，走流水线，拿到一个能点开的测试域名。一期明确不自建 Git 网站——代码继续住在你熟悉的托管上，学院侧用力做部署与审批。 内测阶段长什么样平台走集市账号登录。管理面和模块路由挂在统一域名下，A
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-08-09 18:00" pubdate>
+              2026-08-09
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%9B%E5%B1%95/" class="category-chain-item">进展</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E9%83%A8%E7%BD%B2/">#部署</a>
+            
+              <a href="/tags/%E5%86%85%E6%B5%8B/">#内测</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/07/25/iWiki%E7%BC%96%E8%BE%91%E5%99%A8%E4%B8%8ECodeWiki%E6%9B%B4%E6%96%B0/" target="_self">
+          iWiki 更新：所见即所得编辑与 CodeWiki
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/07/25/iWiki%E7%BC%96%E8%BE%91%E5%99%A8%E4%B8%8ECodeWiki%E6%9B%B4%E6%96%B0/" target="_self">
+        <div>
+          iWiki 上线两周后，迎来一次体感很强的更新。对外宣传可以收成两句话：写文档不再像在纯文本框里 assembles 语法；粘贴一个公开仓库地址，可以自动长出一套代码 Wiki。 编辑：点哪里改哪里新编辑器走所见即所得。标题、列表、表格、代码块可以工具栏插入，也能粘贴 Markdown 后即时渲染。工具栏固定在编辑区顶部，滑正文时不再带着格式条跑丢。快捷键覆盖粗体、斜体、行内代码、代码块和多级标题
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-07-25 20:00" pubdate>
+              2026-07-25
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%9B%E5%B1%95/" class="category-chain-item">进展</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/iWiki/">#iWiki</a>
+            
+              <a href="/tags/%E8%BF%9B%E5%B1%95/">#进展</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/07/12/iWiki%E4%B8%8A%E7%BA%BF/" target="_self">
+          iWiki 知识库平台正式上线
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/07/12/iWiki%E4%B8%8A%E7%BA%BF/" target="_self">
+        <div>
+          2026 年七月十二日，iWiki 正式向软工人打开大门。它不是又一个网盘，也不是SSE_MARKET的附件栏，而是按「空间 → 文档树」组织的团队知识库：写方案、留踩坑、做交接、给新人指路，都该进这里，而不是进三年后找不到的聊天记录。 SSE_MARKET解决当下，Wiki 解决以后集市帖适合爆发式问答。一门课怎么复习、某次面试怎么答，发帖效率最高。可当答案需要改第三版、需要目录、需要权限、需要
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-07-12 12:00" pubdate>
+              2026-07-12
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%9B%E5%B1%95/" class="category-chain-item">进展</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/iWiki/">#iWiki</a>
+            
+              <a href="/tags/%E5%B9%B3%E5%8F%B0/">#平台</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/07/05/%E5%B0%8F%E7%A7%8B%E5%AF%B9%E8%AF%9D%E5%8F%91%E5%B8%96/" target="_self">
+          小秋对话发帖试运行
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/07/05/%E5%B0%8F%E7%A7%8B%E5%AF%B9%E8%AF%9D%E5%8F%91%E5%B8%96/" target="_self">
+        <div>
+          发帖门槛有时不在技术，而在「懒得打字」。你明明有一肚子出闲置、求组队、吐槽实验的话，打开编辑框却只想把手机扣上。2026 年七月，小秋多了一项试运行能力：对话发帖——你用口语描述想发什么，它先起草，你确认后再发出去。 它实际在做什么典型用法很短：「帮我写个帖，出一本几乎全新的高数教材，中珠面交。」小秋会补上标题语气、分段和基本礼貌用语，你改两句就能发。它不替代你对内容负责，只是把从零盯着空白框的痛
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-07-05 18:00" pubdate>
+              2026-07-05
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%9B%E5%B1%95/" class="category-chain-item">进展</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E8%BF%9B%E5%B1%95/">#进展</a>
+            
+              <a href="/tags/%E5%B0%8F%E7%A7%8B/">#小秋</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+
+
+  <nav aria-label="navigation">
+    <span class="pagination" id="pagination">
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/#board">2</a><a class="page-number" href="/page/3/#board">3</a><a class="page-number" href="/page/4/#board">4</a><a class="extend next" rel="next" href="/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
+    </span>
+  </nav>
+
+
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <span>SSE MARKET · 软工人定义的世界</span> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         人
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+    <!-- 备案信息 ICP for China -->
+    <div class="beian">
+  <span>
+    <a href="http://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener">
+      粤ICP备2023105583号-1
+    </a>
+  </span>
+  
+</div>
+
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/ssemarket.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

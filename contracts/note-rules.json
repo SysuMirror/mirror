@@ -1,0 +1,17 @@
+{
+  "minLength": 1,
+  "maxLength": 500,
+  "maxPerPost": 20,
+  "messages": {
+    "required": "补充说明不能为空",
+    "tooLong": "补充说明最多 {max} 字",
+    "tooMany": "每条需求最多补充 {count} 条说明",
+    "format": "补充说明格式不正确",
+    "login": "请先登录后再补充说明",
+    "forbidden": "只有发布者本人可以补充说明",
+    "notFound": "这条需求不存在或已被发布者删除",
+    "unavailable": "暂时无法核实需求信息，请稍后重试",
+    "postID": "需求编号无效",
+    "saved": "补充说明已发布"
+  }
+}
