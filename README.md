@@ -1,10 +1,12 @@
-# 沕鉴·Mirror — 校园需求互助社区
+# 沕鉴·Mirror — 需求接单平台
 
-品牌首页 + 需求社区。前端设计稿来自 `Mirror-静态站点-首页社区-20261121`，社区页已用 **Svelte 5 + Vite** 重写为高性能 SPA；后端用 **Node 22 标准库**（`node:http` + `node:sqlite`）重写，零第三方运行时依赖。
+甲方发布需求与预算，开发者报名接单。Mirror 是以甲方需求为导向的接单平台，面向高校场景提供需求发布、报名沟通、交付验收的完整流程，需求状态与交付记录均可追溯。
+
+前端为 **Svelte 5 + Vite** 单页应用（需求大厅），后端用 **Node 22 标准库**（`node:http` + `node:sqlite`）实现，零第三方运行时依赖；品牌首页独立托管，保持原生实现。
 
 ```
 .
-├── server.js            # Node 后端：静态托管 + /api/* 社区接口 + /mirror-api/* 兼容接口 + SQLite
+├── server.js            # Node 后端：静态托管 + /api/* 业务接口 + /mirror-api/* 兼容接口 + SQLite
 ├── run.sh               # 前台入口（supervisor 托管），自动寻找 Node 22+
 ├── deploy.sh            # 兼容旧平台入口，转交 run.sh
 ├── package.json         # 后端元信息（type: module）
@@ -15,8 +17,8 @@
 │   ├── landing-fx.css   # 首页增强：自定义光标、白色版块粒子背景、底部口号带
 │   ├── landing-fx.js    # 首页增强逻辑（原生 canvas，尊重 reduced-motion）
 │   ├── assets/          # 首页图片资源
-│   └── app/             # 社区 SPA 构建产物（Svelte）
-└── frontend/            # 社区 SPA 源码（Svelte 5 + Vite）
+│   └── app/             # 需求大厅 SPA 构建产物（Svelte）
+└── frontend/            # 需求大厅 SPA 源码（Svelte 5 + Vite）
     ├── src/
     │   ├── App.svelte   # 壳层：顶栏/导航/搜索/筛选/登录/Toast/视图切换
     │   ├── state.svelte.js  # 全局响应式状态（runes）
@@ -46,11 +48,11 @@ cp .env.example .env   # 填 UNISSO_CLIENT_ID / UNISSO_CLIENT_SECRET（已有 .e
 
 - 健康门：`GET /api/healthz` → `{"ok":true,"service":"mirror","stack":"node","db":"ok"}`
 - 兼容健康门：`GET /mirror-api/healthz`
-- 首页：`/`；社区：`/app.html`（SPA 资源在 `/app/assets/*`）
+- 首页：`/`；需求大厅：`/app.html`（SPA 资源在 `/app/assets/*`）
 
 ## 前端构建
 
-社区 SPA 改源码后需要重新构建（产物已随部署落盘，运行时不构建）：
+需求大厅 SPA 改源码后需要重新构建（产物已随部署落盘，运行时不构建）：
 
 ```bash
 cd frontend
@@ -74,7 +76,7 @@ npm run build      # 产出 ../web/app/
 
 `.env`、`mirror.db`、`frontend/node_modules`、`web/app` 均已 gitignore，密钥不入库。
 
-## 社区接口（/api/*）
+## 业务接口（/api/*）
 
 身份只取自会话 Cookie（`mirror_sid`，HttpOnly/SameSite=Lax），写操作绝不信任请求体里的用户 ID。
 
@@ -100,7 +102,7 @@ npm run build      # 产出 ../web/app/
 
 ## 兼容接口（/mirror-api/*）
 
-保留原生产语义：`/auth/login|sso/try|logout`、`/me`、`/orders/create|list|detail|status|forward`、`/notes/list|add`、`/stats/get|view|chat`、`/market/chat-history`。批注/统计现在直接落在社区帖子（postID 为社区需求 id），归属由本地会话核实。
+保留原生产语义：`/auth/login|sso/try|logout`、`/me`、`/orders/create|list|detail|status|forward`、`/notes/list|add`、`/stats/get|view|chat`、`/market/chat-history`。批注/统计直接落在需求帖上（postID 为需求 id），归属由本地会话核实。
 
 ## 数据与迁移
 
