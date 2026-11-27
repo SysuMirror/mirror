@@ -3,26 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#000000">
-  <meta name="description" content="沕鉴 Mirror 是软件研发与交付团队，为高校与企业承接业务系统、数据应用和平台基础设施建设。">
+  <meta name="theme-color" content="#080a0e">
+  <meta name="description" content="沕鉴 Mirror 面向高校与企业，承接定制软件、数据应用和平台基础设施建设。从方案设计到上线交接，由研发团队直接负责。">
   <title>沕鉴 Mirror — 软件研发与交付</title>
   <link rel="icon" type="image/png" href="/assets/logo.png">
-  <link rel="stylesheet" href="/landing-fx.css?v=9">
+  <link rel="stylesheet" href="/landing-fx.css?v=10">
   <script src="/landing-mirror.js" defer></script>
-  <script src="/landing-fx.js?v=8" defer></script>
+  <script src="/landing-fx.js?v=9" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">跳到主内容</a>
   <header class="site-header">
     <div class="wrap header-inner">
-      <a class="brand" href="#hm-top" aria-label="沕鉴 Mirror 首页"><img src="/assets/logo.png" width="30" height="30" alt=""><span>沕鉴 <span lang="en">Mirror</span></span></a>
+      <a class="brand" href="#hm-top" aria-label="沕鉴 Mirror 首页"><img src="/assets/logo.png" width="32" height="32" alt=""><span>沕鉴 <span lang="en">Mirror</span></span></a>
       <button class="menu-toggle" id="navToggle" type="button" hidden aria-label="打开菜单" aria-expanded="false" aria-controls="navMenu"><span aria-hidden="true"></span></button>
       <nav class="site-nav" id="navMenu" aria-label="主导航">
-        <div class="nav-sections">
-          <a href="#hm-services">服务</a>
-          <a href="#hm-eco">工程实践</a>
-          <a href="#hm-foundation">合作方式</a>
-        </div>
+        <a href="#hm-services">研发服务</a>
+        <a href="#hm-eco">工程实践</a>
+        <a href="#hm-foundation">交付方式</a>
         <a class="button button-nav" href="#hm-about">项目咨询 <span aria-hidden="true">↗</span></a>
       </nav>
     </div>
@@ -32,87 +30,88 @@
     <section class="hm-hero" id="hm-top" aria-label="沕鉴 Mirror 品牌开屏">
       <div class="hm-hero__frame">
         <p class="hm-hero__word" aria-hidden="true">Mirror</p>
-        <a class="hero-next" href="#intro" aria-label="了解沕鉴的服务"><span aria-hidden="true">↓</span></a>
+        <a class="hero-next" href="#intro" aria-label="进入官网"><span>进入官网</span><span class="hero-next-icon" aria-hidden="true">↓</span></a>
       </div>
     </section>
 
     <section class="intro" id="intro" tabindex="-1" aria-labelledby="intro-title">
+      <picture class="intro-art" aria-hidden="true">
+        <img src="/assets/mirror-sculpture.webp" width="1440" height="960" alt="" fetchpriority="high">
+      </picture>
       <div class="wrap intro-inner">
-        <p class="eyebrow">沕鉴软件研发团队</p>
-        <h1 id="intro-title">为复杂业务，<br>交付可靠的软件。</h1>
-        <div class="intro-bottom">
-          <p>我们为高校与企业设计、开发并交付软件。从需求评估、系统开发到上线交接，由沕鉴团队直接负责。</p>
-          <a class="button button-primary" href="#hm-about">提交项目需求 <span aria-hidden="true">↗</span></a>
+        <div class="intro-copy">
+          <h1 id="intro-title">从业务构想到<br>系统交付</h1>
+          <p>沕鉴面向高校与企业承接软件研发。业务系统、数据应用与平台工程，从方案设计到上线交接均由团队直接负责。</p>
+          <a class="button button-primary" href="#hm-about">与我们讨论项目 <span aria-hidden="true">↗</span></a>
         </div>
       </div>
     </section>
 
-    <section class="services" id="hm-services" tabindex="-1" aria-labelledby="services-title">
-      <div class="wrap editorial">
-        <h2 class="eyebrow" id="services-title">研发服务</h2>
-        <div>
-          <p class="display">从业务应用到平台底座</p>
-          <div class="service-list">
-            <article>
-              <h3>定制业务系统</h3>
-              <p>开发门户、管理后台和工作流系统，将权限、审批和现有业务接口纳入同一套交付方案。</p>
-            </article>
-            <article>
-              <h3>数据应用与集成</h3>
-              <p>打通分散数据源，建设业务看板、报表和分析工具，让团队能够持续使用和维护数据。</p>
-            </article>
-            <article>
-              <h3>平台工程</h3>
-              <p>承接统一身份、部署与运行环境建设，按项目需要接入容器、存储和算力资源。</p>
-            </article>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="work dark" id="hm-eco" tabindex="-1" aria-labelledby="work-title">
+    <section class="chapter" id="hm-services" tabindex="-1" aria-labelledby="services-title">
       <div class="wrap">
-        <h2 class="eyebrow" id="work-title">工程实践</h2>
-        <article class="project">
-          <div class="project-copy">
-            <h3>软工集市</h3>
-            <p class="project-lead">从业务应用到统一身份与部署的校园服务平台。</p>
-            <p>将信息发布、协作和管理工作台接入同一套系统。身份认证与部署能力随后用于知识库、云平台等应用。</p>
-            <a class="text-link" href="https://ssemarket.cn/">访问软工集市 <span aria-hidden="true">↗</span></a>
-          </div>
-          <div class="project-visual">
-            <img class="project-screen project-screen-back" src="/assets/eco-market-workbench.webp" alt="软工集市管理工作台" width="686" height="1029" loading="lazy">
-            <img class="project-screen project-screen-front" src="/assets/eco-market-home.webp" alt="软工集市首页" width="764" height="1164" loading="lazy">
-          </div>
-        </article>
-        <div class="project-more">
-          <a href="https://iwiki.ssemarket.cn/"><div><strong>iWiki</strong><p>知识与文档协作</p></div><span aria-hidden="true">↗</span></a>
-          <a href="https://cloud.ssemarket.cn/"><div><strong>YatTerra</strong><p>容器、GPU 与存储调度</p></div><span aria-hidden="true">↗</span></a>
-          <a href="/assets/architecture.webp"><div><strong>平台架构</strong><p>统一身份、部署及运行环境</p></div><span aria-hidden="true">↗</span></a>
+        <div class="chapter-head">
+          <h2 id="services-title">研发服务</h2>
+          <p>按业务目标确定系统边界，把需要交付的功能、接口与运行环境一并考虑。</p>
+        </div>
+        <div class="service-list">
+          <article>
+            <h3>定制业务系统</h3>
+            <p>建设门户、管理后台与工作流。围绕实际使用角色梳理权限、审批和业务接口。</p>
+          </article>
+          <article>
+            <h3>数据应用与集成</h3>
+            <p>接通业务数据，建设看板、报表与分析工具。明确指标口径、更新方式和维护职责。</p>
+          </article>
+          <article>
+            <h3>平台工程</h3>
+            <p>建设统一身份、部署流程和运行环境，按需接入容器、存储与算力资源。</p>
+          </article>
         </div>
       </div>
     </section>
 
-    <section class="delivery" id="hm-foundation" tabindex="-1" aria-labelledby="delivery-title">
-      <div class="wrap editorial">
-        <h2 class="eyebrow" id="delivery-title">合作方式</h2>
-        <div>
-          <p class="display">先对齐目标，再按阶段交付</p>
-          <ol class="delivery-steps">
-            <li><span aria-hidden="true">01</span><div><h3>需求评估</h3><p>对齐业务目标、使用场景和系统边界，给出初步的范围与实施建议。</p></div></li>
-            <li><span aria-hidden="true">02</span><div><h3>方案与开发</h3><p>确认交付物、里程碑与验收标准，按阶段演示进展并验证核心流程。</p></div></li>
-            <li><span aria-hidden="true">03</span><div><h3>验收与交接</h3><p>按约定完成上线、验收和文档交接，明确后续维护范围。</p></div></li>
-          </ol>
+    <section class="chapter work" id="hm-eco" tabindex="-1" aria-labelledby="work-title">
+      <div class="wrap">
+        <div class="chapter-head">
+          <h2 id="work-title">工程实践</h2>
+          <p>我们从软工集市的建设出发，将身份、部署与运行能力应用到知识协作和云资源管理。</p>
+        </div>
+        <figure class="work-feature">
+          <div class="work-visual">
+            <img src="/assets/eco-iwiki.webp" width="1600" height="780" alt="iWiki 知识库的项目导航和工程文档界面" loading="lazy">
+          </div>
+          <figcaption>
+            <div><h3>iWiki 知识库</h3><p>组织项目目录与工程文档，接入统一身份登录。</p></div>
+            <a class="text-link" href="https://iwiki.ssemarket.cn/">访问 iWiki <span aria-hidden="true">↗</span></a>
+          </figcaption>
+        </figure>
+        <div class="work-index">
+          <a href="https://ssemarket.cn/"><strong>软工集市</strong><span>信息发布、业务协作与管理工作台</span><span aria-hidden="true">↗</span></a>
+          <a href="https://cloud.ssemarket.cn/"><strong>YatTerra 云平台</strong><span>容器、GPU 与存储调度</span><span aria-hidden="true">↗</span></a>
+          <a href="/assets/architecture.webp"><strong>平台架构</strong><span>应用、统一身份、部署和运行环境</span><span aria-hidden="true">↗</span></a>
         </div>
       </div>
     </section>
 
-    <section class="contact dark" id="hm-about" tabindex="-1" aria-labelledby="contact-title">
+    <section class="chapter" id="hm-foundation" tabindex="-1" aria-labelledby="delivery-title">
+      <div class="wrap">
+        <div class="chapter-head">
+          <h2 id="delivery-title">交付方式</h2>
+          <p>由同一支团队对接、开发和交付。每个阶段都以明确的成果推进。</p>
+        </div>
+        <ol class="delivery">
+          <li><h3>需求与边界</h3><p>对齐目标、现有系统和使用场景，明确项目范围及验收标准。</p></li>
+          <li><h3>开发与验证</h3><p>按里程碑推进，演示阶段成果，与使用方共同验证核心流程。</p></li>
+          <li><h3>上线与交接</h3><p>按约定部署、验收，移交相应文档，并明确后续维护范围。</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="chapter contact" id="hm-about" tabindex="-1" aria-labelledby="contact-title">
       <div class="wrap contact-inner">
         <div class="contact-copy">
-          <p class="eyebrow">项目咨询</p>
-          <h2 class="display" id="contact-title">聊聊你的项目</h2>
-          <p>告诉我们你希望解决的问题、现有系统和计划时间。沕鉴团队会根据你留下的联系方式对接。</p>
+          <h2 id="contact-title">项目咨询</h2>
+          <p>介绍你想解决的问题、目前的系统和计划时间。沕鉴团队会通过你留下的联系方式对接。</p>
         </div>
         <form class="contact-form" id="inquiryForm" action="/api/project-inquiries" method="post">
           <div class="form-pair">
@@ -122,7 +121,7 @@
           <label>联系方式 <span>邮箱或电话</span><input name="contactMethod" maxlength="120" required></label>
           <label>项目名称<input name="title" maxlength="60" required></label>
           <label>需求说明<textarea name="description" rows="4" maxlength="3600" required></textarea></label>
-          <p class="form-privacy">这些信息仅用于沕鉴团队跟进项目，不会公开发布。</p>
+          <p class="form-privacy">信息仅用于团队对接项目，不会公开发布。</p>
           <button class="button button-primary" type="submit" hidden>提交项目需求 <span aria-hidden="true">↗</span></button>
           <noscript><p>请启用 JavaScript 后提交项目需求。</p></noscript>
           <p id="inquiryStatus" class="form-status" role="status"></p>
@@ -131,9 +130,9 @@
     </section>
   </main>
 
-  <footer class="site-footer dark">
+  <footer class="site-footer">
     <div class="wrap footer-inner">
-      <a class="brand" href="#hm-top" aria-label="回到页面顶部"><img src="/assets/logo.png" width="30" height="30" alt=""><span>沕鉴 <span lang="en">Mirror</span></span></a>
+      <a class="brand" href="#hm-top" aria-label="回到页面顶部"><img src="/assets/logo.png" width="32" height="32" alt=""><span>沕鉴 <span lang="en">Mirror</span></span></a>
       <p>© 2026 沕鉴工作室</p>
       <a class="text-link" href="/app.html?go=login">平台登录 <span aria-hidden="true">↗</span></a>
     </div>

@@ -23,7 +23,7 @@ function setupNavigation() {
 
   function updateHeader() {
     const height = header.offsetHeight;
-    header.classList.toggle('is-light', hero.getBoundingClientRect().bottom <= height + 1);
+    header.classList.toggle('is-docked', hero.getBoundingClientRect().bottom <= height + 1);
     const boundary = height + Math.min(185, innerHeight * .2);
     const atBottom = scrollY + innerHeight >= document.documentElement.scrollHeight - 2;
     const selected = atBottom ? sections.at(-1) : sections.findLast(
