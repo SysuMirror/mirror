@@ -2,7 +2,9 @@
 (function () {
   var hero = document.querySelector(".hm-hero");
   var frame = document.querySelector(".hm-hero__frame");
-  if (!hero || !frame) return;
+  var enter = document.querySelector(".hero-enter");
+  var intro = document.getElementById("intro");
+  if (!hero || !frame || !enter || !intro) return;
 
   var canvas = document.createElement("canvas");
   canvas.className = "hm-hero__mirror";
@@ -21,6 +23,9 @@
   var visible = true, inView = true, booted = false;
   var tin = 0, t0 = 0, pinTop = 0, pinLen = 1, prog = 0, prevSy = -1, progPrev = 0;
   var burstOn = false, burstAt = 0, burstDur = 1600;
+  var autoPending = !location.hash || location.hash === "#hm-top";
+  var exitAt = null, exitScrolled = false;
+  var openingDuration = 4150, shatterLead = 380, reducedTimer = 0;
   var gatherOn = false, gatherAt = 0, gatherDur = 1150, glintAt = 0;
   var hoverT = 0, hover = 0, hmx = 0, hmy = 0, pmx = 0, pmy = 0, pmInit = false;
   var canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
@@ -403,7 +408,44 @@
     ctx.globalCompositeOperation = "source-over";
   }
 
+  function openingIsVisible() {
+    return intro.getBoundingClientRect().top >= window.innerHeight - 8;
+  }
+
+  function scrollIntoIntroduction(focus) {
+    if (focus) intro.focus({ preventScroll: true });
+    intro.scrollIntoView({ behavior: reduce.matches ? "instant" : "smooth", block: "start" });
+  }
+
+  function leaveOpening(now, focus) {
+    if (exitAt !== null) return;
+    autoPending = false;
+    if (reduce.matches) {
+      scrollIntoIntroduction(focus);
+      return;
+    }
+    exitAt = now;
+    if (!burstOn) { burstOn = true; burstAt = now; }
+    gatherOn = false;
+    if (focus) intro.focus({ preventScroll: true });
+    kick();
+  }
+
+  function scheduleReducedOpening() {
+    clearTimeout(reducedTimer);
+    if (!reduce.matches || !autoPending || document.hidden) return;
+    reducedTimer = setTimeout(function () {
+      if (autoPending && openingIsVisible()) leaveOpening(performance.now(), false);
+    }, 1100);
+  }
+
   function draw(now) {
+    if (!reduce.matches && autoPending && now - t0 >= openingDuration && openingIsVisible())
+      leaveOpening(now, false);
+    if (exitAt !== null && !exitScrolled && now - exitAt >= shatterLead) {
+      exitScrolled = true;
+      if (openingIsVisible()) scrollIntoIntroduction(false);
+    }
     var sy = window.pageYOffset || document.documentElement.scrollTop;
     var up = prevSy >= 0 && sy < prevSy - 2.5;
     prevSy = sy;
@@ -414,12 +456,13 @@
     if (crossDown && !burstOn) { burstOn = true; burstAt = now; gatherOn = false; }
     progPrev = progNow;
     var ft = frame.getBoundingClientRect().top;
-    if (burstOn && (prog < 0.5 || (up && ft > -H * 0.42))) {
+    if (exitAt !== null && (up || now - exitAt >= burstDur)) { exitAt = null; exitScrolled = false; }
+    if (burstOn && exitAt === null && (prog < 0.5 || (up && ft > -H * 0.42))) {
       burstOn = false; burstAt = 0; sparks.length = 0;
       gatherOn = true; gatherAt = now;
     }
     var b = burstOn ? clamp((now - burstAt) / burstDur, 0, 1) : 0;
-    tin = prog > 0.012 ? Math.max(el, 3.2) : el;
+    tin = reduce.matches ? 3.35 : (exitAt !== null || prog > 0.012 ? Math.max(el, 3.2) : el);
 
     var targetGlyph = W / H < 0.95 ? Math.min(W * 0.8, 720) : Math.min(W * 0.72, 1060);
     var k = targetGlyph / (box.x1 - box.x0);
@@ -771,7 +814,8 @@
     booted = true;
     t0 = performance.now();
     draw(performance.now());
-    if (!reduce.matches) kick();
+    if (reduce.matches) scheduleReducedOpening();
+    else kick();
   }
 
   var rt = 0;
@@ -782,13 +826,24 @@
       if (reduce.matches && booted) draw(performance.now());
     }, 120);
   });
+  enter.addEventListener("click", function (event) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    leaveOpening(performance.now(), true);
+  });
+  window.addEventListener("hashchange", function () {
+    autoPending = false;
+    exitAt = null;
+    exitScrolled = false;
+  });
   window.addEventListener("scroll", function () {
+    if (!openingIsVisible()) autoPending = false;
     if (!raf && visible && inView && !reduce.matches) kick();
   }, { passive: true });
   document.addEventListener("visibilitychange", function () {
     visible = !document.hidden;
-    if (reduce.matches) return;
-    if (visible) kick();
+    if (reduce.matches) scheduleReducedOpening();
+    else if (visible) kick();
   });
   if ("IntersectionObserver" in window) {
     new IntersectionObserver(function (e) {
@@ -798,8 +853,20 @@
     }, { threshold: 0 }).observe(frame);
   }
   reduce.addEventListener?.("change", function () {
-    if (reduce.matches) { if (raf) cancelAnimationFrame(raf); raf = 0; draw(performance.now()); }
-    else kick();
+    if (reduce.matches) {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      if (exitAt !== null && !exitScrolled && openingIsVisible()) scrollIntoIntroduction(false);
+      exitAt = null;
+      exitScrolled = false;
+      burstOn = false;
+      gatherOn = false;
+      draw(performance.now());
+      scheduleReducedOpening();
+    } else {
+      clearTimeout(reducedTimer);
+      kick();
+    }
   });
 
   boot();

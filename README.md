@@ -34,7 +34,7 @@
 
 - **后端 Node 22**：只用 `node:http`、`node:sqlite`、`node:crypto`、`fetch`。无 Express/无 ORM，单文件、单进程、同步 SQLite（WAL），启动即建表/迁移/种子。
 - **前端 Svelte 5**：编译期生成原生 DOM 操作 + 细粒度 runes 响应式，无虚拟 DOM diff。生产产物 JS ≈ 33KB gzip、CSS ≈ 5.5KB gzip。
-- **首页保持原生**：首屏使用原始碎镜 canvas 动画，随后用镜面主视觉承接品牌介绍。正文和链接由 HTML 直接提供。
+- **首页保持原生**：首屏使用原始碎镜 canvas 动画，播放结束后自动破碎并进入品牌介绍，也可点击开屏任意位置提前进入。正文和链接由 HTML 直接提供。
 
 ## 官网项目咨询
 

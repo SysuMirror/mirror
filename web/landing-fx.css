@@ -86,9 +86,10 @@ h2 { font-size: clamp(34px, 5.6vw, 76px); }
 .hm-hero__mirror { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; display: block; background: #000; }
 .hm-hero__word { font-size: clamp(64px, 16vw, 240px); font-weight: 690; line-height: 1; letter-spacing: -.055em; }
 .hm-hero__frame:has(.hm-hero__mirror) .hm-hero__word { visibility: hidden; }
-.hero-next { position: absolute; z-index: 3; right: var(--gutter); bottom: clamp(24px, 5.2vh, 58px); display: flex; align-items: center; gap: 12px; padding: 6px 0 6px 6px; color: #e6ebf3; font-size: 13px; }
-.hero-next-icon { display: grid; width: 43px; height: 43px; place-items: center; border: 1px solid #667181; border-radius: 50%; font-size: 21px; transition: background-color .2s, border-color .2s; }
-.hero-next:hover .hero-next-icon { background: #202938; border-color: var(--blue); }
+.hero-enter { position: absolute; z-index: 3; inset: 0; cursor: pointer; }
+.hero-enter:focus-visible { outline-offset: -5px; }
+.site-header:not(.is-docked) { pointer-events: none; }
+.site-header .brand, .site-header .site-nav a, .site-header .menu-toggle { pointer-events: auto; }
 
 .intro { position: relative; isolation: isolate; display: grid; min-height: clamp(570px, 51vw, 770px); overflow: clip; background: linear-gradient(#000, var(--night) 82%); }
 .intro-inner { z-index: 1; display: grid; align-items: center; padding-block: 60px 76px; }
@@ -195,5 +196,5 @@ h2 { font-size: clamp(34px, 5.6vw, 76px); }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .hm-hero { --hero-pin: 0px; }
-  .site-header, .button, .button span, .hero-next-icon, .text-link span, .work-index a > span:last-child { transition: none; }
+  .site-header, .button, .button span, .text-link span, .work-index a > span:last-child { transition: none; }
 }
