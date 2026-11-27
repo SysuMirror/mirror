@@ -7,7 +7,7 @@
   <meta name="description" content="沕鉴 Mirror 面向高校与企业，承接定制软件、数据应用和平台基础设施建设。从方案设计到上线交接，由研发团队直接负责。">
   <title>沕鉴 Mirror — 软件研发与交付</title>
   <link rel="icon" type="image/png" href="/assets/logo.png">
-  <link rel="stylesheet" href="/landing-fx.css?v=11">
+  <link rel="stylesheet" href="/landing-fx.css?v=12">
   <script src="/landing-mirror.js?v=2" defer></script>
   <script src="/landing-fx.js?v=9" defer></script>
 </head>
@@ -74,21 +74,47 @@
       <div class="wrap">
         <div class="chapter-head">
           <h2 id="work-title">工程实践</h2>
-          <p>我们从软工集市的建设出发，将身份、部署与运行能力应用到知识协作和云资源管理。</p>
+          <p>从软工集市到知识协作和云资源管理，统一身份、部署和运行能力连接着各个系统。</p>
         </div>
-        <figure class="work-feature">
-          <div class="work-visual">
-            <img src="/assets/eco-iwiki.webp" width="1600" height="780" alt="iWiki 知识库的项目导航和工程文档界面" loading="lazy">
-          </div>
-          <figcaption>
-            <div><h3>iWiki 知识库</h3><p>组织项目目录与工程文档，接入统一身份登录。</p></div>
-            <a class="text-link" href="https://iwiki.ssemarket.cn/">访问 iWiki <span aria-hidden="true">↗</span></a>
-          </figcaption>
-        </figure>
-        <div class="work-index">
-          <a href="https://ssemarket.cn/"><strong>软工集市</strong><span>信息发布、业务协作与管理工作台</span><span aria-hidden="true">↗</span></a>
-          <a href="https://cloud.ssemarket.cn/"><strong>YatTerra 云平台</strong><span>容器、GPU 与存储调度</span><span aria-hidden="true">↗</span></a>
-          <a href="/assets/architecture.webp"><strong>平台架构</strong><span>应用、统一身份、部署和运行环境</span><span aria-hidden="true">↗</span></a>
+        <div class="work-layout">
+          <ul class="work-platforms" aria-label="平台入口">
+            <li>
+              <a href="https://ssemarket.cn/">
+                <div><h3>软工集市</h3><p>信息发布、业务协作和管理工作台。</p></div>
+                <span aria-hidden="true">↗</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://iwiki.ssemarket.cn/">
+                <div><h3>iWiki 知识库</h3><p>项目目录、工程文档和团队知识协作。</p></div>
+                <span aria-hidden="true">↗</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://sso.ssemarket.cn/">
+                <div><h3>UniSSO 统一身份认证</h3><p>应用统一登录，提供 OAuth 2.0 与 OpenID Connect 接入。</p></div>
+                <span aria-hidden="true">↗</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://cloud.ssemarket.cn/">
+                <div><h3>YatTerra 云平台</h3><p>统一管理容器、GPU 与存储资源。</p></div>
+                <span aria-hidden="true">↗</span>
+              </a>
+            </li>
+          </ul>
+          <figure class="work-architecture">
+            <a class="architecture-image" href="/assets/platform-architecture.webp" aria-label="查看平台架构大图">
+              <img src="/assets/platform-architecture.webp" width="1800" height="1125" alt="平台架构总览。集市、iWiki、综测及 DEPLOY 由 UniSSO 鉴权。DEPLOY 管理业务部署并控制基础设施。业务应用按需调用集市云、算力中转及图床。" loading="lazy">
+            </a>
+            <figcaption>
+              <p>集市生态架构总览</p>
+              <div class="architecture-links">
+                <a class="text-link" href="/assets/platform-architecture.webp">查看大图 <span aria-hidden="true">↗</span></a>
+                <a class="text-link" href="/assets/architecture.webp">原始架构图 <span aria-hidden="true">↗</span></a>
+              </div>
+            </figcaption>
+          </figure>
         </div>
       </div>
     </section>
