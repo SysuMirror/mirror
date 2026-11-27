@@ -11,9 +11,9 @@
 ├── contracts/           # 金额 / 批注 / 统计 / 发布者展示规则（JSON 唯一真源）
 ├── mirror.db            # 运行时 SQLite（账号/会话/需求/报名/收藏/会话/消息/订单/批注/统计）
 ├── web/                 # 静态产物（直接托管，无需运行时构建）
-│   ├── index.html       # 品牌首页（碎镜首屏与服务、生态、技术底座介绍）
+│   ├── index.html       # 品牌首页（碎镜视觉、服务流程与生态、技术底座介绍）
 │   ├── landing-fx.css   # 首页样式与响应式布局
-│   ├── landing-fx.js    # 首页移动菜单与顶栏状态
+│   ├── landing-fx.js    # 首页导航、当前位置与生态平台切换
 │   ├── assets/          # 首页图片资源
 │   └── app/             # 社区 SPA 构建产物（Svelte）
 └── frontend/            # 社区 SPA 源码（Svelte 5 + Vite）
@@ -33,7 +33,7 @@
 
 - **后端 Node 22**：只用 `node:http`、`node:sqlite`、`node:crypto`、`fetch`。无 Express/无 ORM，单文件、单进程、同步 SQLite（WAL），启动即建表/迁移/种子。
 - **前端 Svelte 5**：编译期生成原生 DOM 操作 + 细粒度 runes 响应式，无虚拟 DOM diff。生产产物 JS ≈ 33KB gzip、CSS ≈ 5.5KB gzip。
-- **首页保持原生**：碎镜首屏使用原生 canvas，按视口启停，在 `prefers-reduced-motion` 下显示静态帧；正文和链接由 HTML 直接提供。
+- **首页保持原生**：首屏使用静态镜面主视觉，正文和链接由 HTML 直接提供。少量原生 JavaScript 增强导航与生态平台切换。
 
 ## 快速启动
 
