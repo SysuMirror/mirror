@@ -7,11 +7,28 @@
   <meta name="description" content="沕鉴 Mirror 面向高校与企业，承接定制软件、数据应用和平台基础设施建设。从方案设计到上线交接，由研发团队直接负责。">
   <title>沕鉴 Mirror — 软件研发与交付</title>
   <link rel="icon" type="image/png" href="/assets/logo.png">
-  <link rel="stylesheet" href="/landing-fx.css?v=12">
-  <script src="/landing-mirror.js?v=2" defer></script>
-  <script src="/landing-fx.js?v=9" defer></script>
+  <script>
+    if ((!location.hash || location.hash === '#hm-top') &&
+        !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.classList.add('mirror-opening-active');
+      setTimeout(() => {
+        window.dispatchEvent(new Event('mirror-opening-timeout'));
+        document.documentElement.classList.remove('mirror-opening-active');
+      }, 8300);
+    }
+  </script>
+  <link rel="stylesheet" href="/landing-fx.css?v=13">
+  <script src="/landing-mirror.js?v=3" defer></script>
+  <script src="/landing-fx.js?v=10" defer></script>
 </head>
 <body>
+  <section class="hm-hero" aria-label="沕鉴 Mirror 品牌开屏">
+    <div class="hm-hero__frame">
+      <p class="hm-hero__word" aria-hidden="true">Mirror</p>
+      <a class="hero-enter" href="#intro" aria-label="进入官网"></a>
+    </div>
+  </section>
+
   <a class="skip" href="#main">跳到主内容</a>
   <header class="site-header">
     <div class="wrap header-inner">
@@ -27,16 +44,10 @@
   </header>
 
   <main id="main" tabindex="-1">
-    <section class="hm-hero" id="hm-top" aria-label="沕鉴 Mirror 品牌开屏">
-      <div class="hm-hero__frame">
-        <p class="hm-hero__word" aria-hidden="true">Mirror</p>
-        <a class="hero-enter" href="#intro" aria-label="进入官网"></a>
-      </div>
-    </section>
-
+    <span id="hm-top" aria-hidden="true"></span>
     <section class="intro" id="intro" tabindex="-1" aria-labelledby="intro-title">
       <picture class="intro-art" aria-hidden="true">
-        <img src="/assets/mirror-sculpture.webp" width="1440" height="960" alt="" fetchpriority="high">
+        <img src="/assets/mirror-facets.webp" width="1260" height="1260" alt="" fetchpriority="high">
       </picture>
       <div class="wrap intro-inner">
         <div class="intro-copy">
@@ -148,7 +159,7 @@
           <label>项目名称<input name="title" maxlength="60" required></label>
           <label>需求说明<textarea name="description" rows="4" maxlength="3600" required></textarea></label>
           <p class="form-privacy">信息仅用于团队对接项目，不会公开发布。</p>
-          <button class="button button-primary" type="submit" hidden>提交项目需求 <span aria-hidden="true">↗</span></button>
+          <button class="button button-primary" type="submit" hidden disabled>提交项目需求 <span aria-hidden="true">↗</span></button>
           <noscript><p>请启用 JavaScript 后提交项目需求。</p></noscript>
           <p id="inquiryStatus" class="form-status" role="status"></p>
         </form>
@@ -160,7 +171,6 @@
     <div class="wrap footer-inner">
       <a class="brand" href="#hm-top" aria-label="回到页面顶部"><img src="/assets/logo.png" width="32" height="32" alt=""><span>沕鉴 <span lang="en">Mirror</span></span></a>
       <p>© 2026 沕鉴工作室</p>
-      <a class="text-link" href="/app.html?go=login">平台登录 <span aria-hidden="true">↗</span></a>
     </div>
   </footer>
 </body>

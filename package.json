@@ -1,11 +1,13 @@
 {
-  "name": "mirror-community",
+  "name": "mirror-studio",
   "version": "3.0.0",
   "private": true,
   "type": "module",
-  "description": "沕鉴·Mirror 校园需求社区——Node 22 标准库后端（node:http + node:sqlite）",
+  "description": "沕鉴 Mirror 官网与项目咨询工单",
   "scripts": {
-    "start": "node --disable-warning=ExperimentalWarning server.js"
+    "start": "node --disable-warning=ExperimentalWarning server.js",
+    "inquiries": "node --disable-warning=ExperimentalWarning scripts/project-inquiries.js",
+    "test": "node --disable-warning=ExperimentalWarning --test scripts/project-inquiries.test.js"
   },
   "engines": {
     "node": ">=22.5"

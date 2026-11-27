@@ -3,7 +3,6 @@ function setupNavigation() {
   const toggle = document.querySelector('#navToggle');
   const menu = document.querySelector('#navMenu');
   const mobile = window.matchMedia('(max-width: 720px)');
-  const hero = document.querySelector('#hm-top');
   const anchors = [...menu.querySelectorAll('a[href^="#"]')];
   const sections = anchors.map((anchor) => document.getElementById(anchor.hash.slice(1)));
 
@@ -23,7 +22,7 @@ function setupNavigation() {
 
   function updateHeader() {
     const height = header.offsetHeight;
-    header.classList.toggle('is-docked', hero.getBoundingClientRect().bottom <= height + 1);
+    header.classList.toggle('is-docked', scrollY > 12);
     const boundary = height + Math.min(185, innerHeight * .2);
     const atBottom = scrollY + innerHeight >= document.documentElement.scrollHeight - 2;
     const selected = atBottom ? sections.at(-1) : sections.findLast(
@@ -62,7 +61,6 @@ function setupNavigation() {
   window.addEventListener('scroll', scheduleUpdate, { passive: true });
   window.addEventListener('resize', scheduleUpdate);
   window.addEventListener('pageshow', scheduleUpdate);
-  if ('ResizeObserver' in window) new ResizeObserver(scheduleUpdate).observe(hero);
   updateHeader();
 }
 
@@ -97,15 +95,15 @@ function setupInquiry() {
         body: JSON.stringify({ ...data, requestKey }),
       });
       const result = await response.json();
-      if (!response.ok) {
-        const message = response.status < 500 ? result.error : '';
+      if (!response.ok || !result?.ok || !/^q[0-9a-f]{32}$/.test(result.orderId)) {
+        const message = response.status < 500 ? result?.error : '';
         setStatus(message || '暂时无法提交，请稍后重试。', 'error');
         return;
       }
 
       form.reset();
       previousData = '';
-      setStatus('项目需求已提交，沕鉴团队将通过你留下的联系方式对接。', 'ok');
+      setStatus(`项目需求已提交。工单编号：${result.orderId}。沕鉴团队会通过你留下的联系方式对接。`, 'ok');
     } catch {
       setStatus('连接中断，请重试。重复提交同一份需求只会登记一次。', 'error');
     } finally {
@@ -113,6 +111,7 @@ function setupInquiry() {
     }
   });
 
+  button.disabled = false;
   button.hidden = false;
 }
 

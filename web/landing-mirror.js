@@ -1,18 +1,36 @@
-/* 首屏碎镜：碎片从四周汇聚成 Mirror，反光扫过；下滚时炸开飞散，化成星尘嵌入背景 */
+/* Mirror 字标碎裂，碎片旋转拼成首页镜面。 */
 (function () {
   var hero = document.querySelector(".hm-hero");
   var frame = document.querySelector(".hm-hero__frame");
   var enter = document.querySelector(".hero-enter");
   var intro = document.getElementById("intro");
-  if (!hero || !frame || !enter || !intro) return;
+  var root = document.documentElement;
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+  if (!root.classList.contains("mirror-opening-active")) return;
+  if (reduce.matches || window.scrollY > 8 || (location.hash && location.hash !== "#hm-top") ||
+      !hero || !frame || !enter || !intro) {
+    root.classList.remove("mirror-opening-active");
+    return;
+  }
+
+  var art = intro.querySelector(".intro-art img");
+  var underlay = [document.querySelector(".site-header"), document.querySelector("main"), document.querySelector(".site-footer")];
 
   var canvas = document.createElement("canvas");
   canvas.className = "hm-hero__mirror";
   canvas.setAttribute("aria-hidden", "true");
   var ctx = canvas.getContext("2d");
-  if (!ctx) return;
+  if (!ctx) {
+    root.classList.remove("mirror-opening-active");
+    return;
+  }
   frame.appendChild(canvas);
-  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var assembly = document.createElement("canvas");
+  assembly.className = "hm-hero__assembly";
+  assembly.setAttribute("aria-hidden", "true");
+  var assemblyCtx = assembly.getContext("2d");
+  if (assemblyCtx && art) frame.appendChild(assembly);
+  else assemblyCtx = null;
 
   var WW = 1500, WH = 470, WORD = "Mirror";
   var word = null, mask = null, glow = null, refl = null, reflH = 0, glint = null, gctx = null;
@@ -20,13 +38,10 @@
   var bg = null, maskData = null, box = null, baseY = 0;
   var shards = [], dust = [], lensShards = [];
   var W = 0, H = 0, DPR = 1, raf = 0;
-  var visible = true, inView = true, booted = false;
-  var tin = 0, t0 = 0, pinTop = 0, pinLen = 1, prog = 0, prevSy = -1, progPrev = 0;
+  var tin = 0, t0 = 0;
   var burstOn = false, burstAt = 0, burstDur = 1600;
-  var autoPending = !location.hash || location.hash === "#hm-top";
-  var exitAt = null, exitScrolled = false;
-  var openingDuration = 4150, shatterLead = 380, reducedTimer = 0;
-  var gatherOn = false, gatherAt = 0, gatherDur = 1150, glintAt = 0;
+  var handoffDelay = 300, assemblyDuration = 1150;
+  var tiles = null, focusIntro = false;
   var hoverT = 0, hover = 0, hmx = 0, hmy = 0, pmx = 0, pmy = 0, pmInit = false;
   var canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   var sparks = [], burstCx = 0, burstCy = 0;
@@ -374,9 +389,10 @@
     canvas.style.height = H + "px";
     buildBG();
     buildDust();
-    pinTop = hero.getBoundingClientRect().top + window.pageYOffset;
-    pinLen = Math.max(120, hero.offsetHeight - frame.offsetHeight);
-    progPrev = clamp((window.pageYOffset - pinTop) / pinLen, 0, 1);
+    if (assemblyCtx) {
+      assembly.width = canvas.width;
+      assembly.height = canvas.height;
+    }
   }
 
   function drawGlint(phase, alpha, wx, wy, k) {
@@ -408,66 +424,109 @@
     ctx.globalCompositeOperation = "source-over";
   }
 
-  function openingIsVisible() {
-    return intro.getBoundingClientRect().top >= window.innerHeight - 8;
-  }
-
-  function scrollIntoIntroduction(focus) {
+  function releaseOpening(focus) {
+    if (!root.classList.contains("mirror-opening-active")) return;
+    cancelAnimationFrame(raf);
+    root.classList.remove("mirror-opening-active", "mirror-opening-handoff", "mirror-opening-settled");
+    underlay.forEach(function (el) { el.inert = false; });
     if (focus) intro.focus({ preventScroll: true });
-    intro.scrollIntoView({ behavior: reduce.matches ? "instant" : "smooth", block: "start" });
   }
 
   function leaveOpening(now, focus) {
-    if (exitAt !== null) return;
-    autoPending = false;
-    if (reduce.matches) {
-      scrollIntoIntroduction(focus);
-      return;
-    }
-    exitAt = now;
-    if (!burstOn) { burstOn = true; burstAt = now; }
-    gatherOn = false;
-    if (focus) intro.focus({ preventScroll: true });
-    kick();
+    if (burstOn || !root.classList.contains("mirror-opening-active")) return;
+    burstOn = true;
+    burstAt = now;
+    focusIntro = focus;
   }
 
-  function scheduleReducedOpening() {
-    clearTimeout(reducedTimer);
-    if (!reduce.matches || !autoPending || document.hidden) return;
-    reducedTimer = setTimeout(function () {
-      if (autoPending && openingIsVisible()) leaveOpening(performance.now(), false);
-    }, 1100);
+  function createAssembly() {
+    var gridSize = 5;
+    var grid = [];
+    for (var row = 0; row <= gridSize; row++) {
+      var points = [];
+      for (var col = 0; col <= gridSize; col++) {
+        var x = col === 0 || col === gridSize ? col : col + (trand(col, row, 1) - 0.5) * 0.6;
+        var y = row === 0 || row === gridSize ? row : row + (trand(col, row, 2) - 0.5) * 0.6;
+        points.push([x / gridSize, y / gridSize]);
+      }
+      grid.push(points);
+    }
+    var tiles = [];
+    for (var r = 0; r < gridSize; r++) {
+      for (var c = 0; c < gridSize; c++) {
+        var polygon = [grid[r][c], grid[r][c + 1], grid[r + 1][c + 1], grid[r + 1][c]];
+        var xs = polygon.map(function (point) { return point[0]; });
+        var ys = polygon.map(function (point) { return point[1]; });
+        var left = Math.min.apply(null, xs), top = Math.min.apply(null, ys);
+        var width = Math.max.apply(null, xs) - left, height = Math.max.apply(null, ys) - top;
+        var i = r * gridSize + c;
+        var shard = shards[Math.floor((i + 0.5) / (gridSize * gridSize) * shards.length)];
+        tiles.push({
+          polygon: polygon,
+          left: left, top: top, width: width, height: height,
+          x: left + width / 2, y: top + height / 2,
+          originX: shard.exitX, originY: shard.exitY,
+          rotation: (trand(c, r, 4) - 0.5) * 3.3,
+          bend: (trand(c, r, 5) - 0.5) * 0.38,
+          delay: trand(c, r, 6) * 0.14
+        });
+      }
+    }
+    return tiles;
+  }
+
+  function drawAssembly(progress) {
+    if (!assemblyCtx || !art.complete || !art.naturalWidth) return;
+    if (!tiles && progress < 0.25) tiles = createAssembly();
+    if (!tiles) return;
+
+    var rect = art.getBoundingClientRect();
+    var ctx = assemblyCtx;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    tiles.forEach(function (tile) {
+      var p = clamp((progress - tile.delay) / (0.88 - tile.delay), 0, 1);
+      if (p === 0) return;
+      var settle = 1 - Math.pow(1 - p, 2.6);
+      var destX = rect.left + tile.x * rect.width;
+      var destY = rect.top + tile.y * rect.height;
+      var orbit = Math.sin(Math.PI * settle) * Math.min(W, H) * tile.bend;
+      var x = tile.originX + (destX - tile.originX) * settle + orbit;
+      var y = tile.originY + (destY - tile.originY) * settle - orbit * 0.54;
+      var scale = 0.42 + 0.58 * settle;
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, p * 5) * (1 - clamp((progress - 0.89) / 0.11, 0, 1));
+      ctx.translate(x, y);
+      ctx.rotate((tile.rotation + 0.45) * (1 - settle));
+      ctx.scale(scale, scale);
+      ctx.beginPath();
+      tile.polygon.forEach(function (point, index) {
+        var px = (point[0] - tile.x) * rect.width;
+        var py = (point[1] - tile.y) * rect.height;
+        if (index === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(art,
+        tile.left * art.naturalWidth, tile.top * art.naturalHeight,
+        tile.width * art.naturalWidth, tile.height * art.naturalHeight,
+        (tile.left - tile.x) * rect.width, (tile.top - tile.y) * rect.height,
+        tile.width * rect.width, tile.height * rect.height
+      );
+      ctx.restore();
+    });
   }
 
   function draw(now) {
-    if (!reduce.matches && autoPending && now - t0 >= openingDuration && openingIsVisible())
-      leaveOpening(now, false);
-    if (exitAt !== null && !exitScrolled && now - exitAt >= shatterLead) {
-      exitScrolled = true;
-      if (openingIsVisible()) scrollIntoIntroduction(false);
-    }
-    var sy = window.pageYOffset || document.documentElement.scrollTop;
-    var up = prevSy >= 0 && sy < prevSy - 2.5;
-    prevSy = sy;
-    var progNow = reduce.matches ? 0 : clamp((sy - pinTop) / pinLen, 0, 1);
-    var crossDown = progNow > 0.56 && progPrev <= 0.56;
-    prog = progNow;
     var el = (now - t0) / 1000;
-    if (crossDown && !burstOn) { burstOn = true; burstAt = now; gatherOn = false; }
-    progPrev = progNow;
-    var ft = frame.getBoundingClientRect().top;
-    if (exitAt !== null && (up || now - exitAt >= burstDur)) { exitAt = null; exitScrolled = false; }
-    if (burstOn && exitAt === null && (prog < 0.5 || (up && ft > -H * 0.42))) {
-      burstOn = false; burstAt = 0; sparks.length = 0;
-      gatherOn = true; gatherAt = now;
-    }
     var b = burstOn ? clamp((now - burstAt) / burstDur, 0, 1) : 0;
-    tin = reduce.matches ? 3.35 : (exitAt !== null || prog > 0.012 ? Math.max(el, 3.2) : el);
+    tin = burstOn ? Math.max(el, 3.2) : el;
 
     var targetGlyph = W / H < 0.95 ? Math.min(W * 0.8, 720) : Math.min(W * 0.72, 1060);
     var k = targetGlyph / (box.x1 - box.x0);
-    var pull = clamp(prog / 0.56, 0, 1);
-    var gs = 1 + 0.006 * Math.sin(tin * 0.55) + 0.05 * pull * pull;
+    var gs = 1 + 0.006 * Math.sin(tin * 0.55);
     var gx = W / 2 + Math.sin(tin * 0.4) * 5;
     var gy = H * 0.47 + Math.cos(tin * 0.33) * 4;
     if (burstOn && sparks.length === 0) { burstCx = gx; burstCy = gy; buildSparks(); }
@@ -485,15 +544,7 @@
     }
 
     var built = clamp((tin - 0.7) / 1.4, 0, 1);
-    var gRaw = 0;
-    if (gatherOn) {
-      gRaw = 1 - clamp((now - gatherAt) / gatherDur, 0, 1);
-      if (gRaw <= 0) { gatherOn = false; gRaw = 0; glintAt = now; }
-    }
-    var formA = gatherOn ? 1 - gRaw : 1;
-    var sol = clamp((tin - 2.55) / 0.75, 0, 1);
-    if (burstOn) sol = 0;
-    else if (gatherOn) sol = clamp((formA - 0.9) / 0.1, 0, 1);
+    var sol = burstOn ? 0 : clamp((tin - 2.55) / 0.75, 0, 1);
 
     // 反光：入场后首次，之后循环
     var gAlpha = 0, gPhase = 0;
@@ -506,12 +557,6 @@
       }
     }
     if (built < 0.9) gAlpha = 0;
-    if (gatherOn) gAlpha = 0;
-    else if (glintAt && now - glintAt < 640) {
-      var gp2 = (now - glintAt) / 640;
-      gPhase = gp2;
-      gAlpha = Math.sin(3.1416 * gp2) * 0.95;
-    }
     var gSweep = wx + (-0.5 * WW + gPhase * 1.95 * WW) * k * gs;
     var gBand = 0.3 * WW * k * gs;
 
@@ -548,20 +593,17 @@
 
       var fm = clamp((b - 0.05) / 0.5, 0, 1);
       var f = fm * fm * (3 - 2 * fm);
-      var gi = 0;
-      if (gatherOn) { gi = clamp((gRaw - s.gd * 0.18) / 0.82, 0, 1); gi = gi * gi * (3 - 2 * gi); }
       var d = (f * s.dist + drift) * maxDim;
-      if (gi > 0) d += gi * (0.12 + s.dist * 0.5) * maxDim;
       px += Math.cos(s.sdir) * d;
       py += Math.sin(s.sdir) * d;
-      rot += f * s.spin + gi * s.spin * 1.2;
+      rot += f * s.spin;
+      s.exitX = clamp(px, -W * 0.15, W * 1.15);
+      s.exitY = clamp(py, -H * 0.15, H * 1.15);
       scl *= 1 - 0.42 * f;
-      if (gi > 0) scl *= 0.84 + 0.16 * (1 - gi);
       if (b > 0 && b < 0.05) scl *= 1 + 0.06 * (1 - b / 0.05);
       if (b < 0.14) scl *= 1 + 0.16 * (1 - b / 0.14);
 
       var alpha = (0.32 + 0.68 * e) * (1 - clamp((b - 0.42) / 0.38, 0, 1)) * (1 - 0.25 * clamp(b, 0, 1));
-      if (gi > 0) alpha *= 1 - 0.45 * gi;
       alpha *= 1 - sol;
       if (alpha < 0.01) continue;
 
@@ -741,16 +783,6 @@
       ctx.globalCompositeOperation = "source-over";
     }
 
-    if (glintAt && !gatherOn && now - glintAt < 260) {
-      var cp = (now - glintAt) / 260;
-      ctx.globalCompositeOperation = "lighter";
-      ctx.globalAlpha = 0.18 * Math.pow(1 - cp, 2.2);
-      var cw = WW * k * 1.05 * gs, chh2 = WH * k * 1.05 * gs;
-      ctx.drawImage(glow, wx - (cw - WW * k * gs) / 2, wy - (chh2 - WH * k * gs) / 2, cw, chh2);
-      ctx.globalAlpha = 1;
-      ctx.globalCompositeOperation = "source-over";
-    }
-
     drawGlint(gPhase, gAlpha * Math.max(0, 1 - b * 2.6), wx, wy, k * gs);
 
     ctx.globalCompositeOperation = "lighter";
@@ -797,77 +829,58 @@
 
   function loop(now) {
     raf = 0;
-    if (!visible || !inView) return;
-    draw(now);
+    if (document.hidden || !root.classList.contains("mirror-opening-active")) return;
+    if (!burstOn && now - t0 >= 4150) leaveOpening(now, false);
+
+    var elapsed = now - burstAt;
+    if (!burstOn || elapsed < handoffDelay + 420) draw(now);
+    if (burstOn && elapsed >= handoffDelay) {
+      var progress = clamp((elapsed - handoffDelay) / assemblyDuration, 0, 1);
+      root.classList.add("mirror-opening-handoff");
+      drawAssembly(progress);
+      if (progress >= 0.89) root.classList.add("mirror-opening-settled");
+      if (progress === 1) {
+        releaseOpening(focusIntro);
+        return;
+      }
+    }
     raf = requestAnimationFrame(loop);
   }
+
   function kick() {
-    if (!raf && visible && inView) raf = requestAnimationFrame(loop);
+    if (!raf && !document.hidden && root.classList.contains("mirror-opening-active"))
+      raf = requestAnimationFrame(loop);
   }
 
-  function boot() {
-    buildWord();
-    buildFX();
-    buildShards(38, shards);
-    buildShards(16, lensShards);
-    resize();
-    booted = true;
-    t0 = performance.now();
-    draw(performance.now());
-    if (reduce.matches) scheduleReducedOpening();
-    else kick();
-  }
+  window.addEventListener("mirror-opening-timeout", function () { releaseOpening(false); }, { once: true });
+  buildWord();
+  buildFX();
+  buildShards(38, shards);
+  buildShards(16, lensShards);
+  resize();
+  t0 = performance.now();
+  underlay.forEach(function (el) { el.inert = true; });
+  draw(t0);
+  kick();
 
-  var rt = 0;
-  window.addEventListener("resize", function () {
-    clearTimeout(rt);
-    rt = setTimeout(function () {
-      resize();
-      if (reduce.matches && booted) draw(performance.now());
-    }, 120);
-  });
   enter.addEventListener("click", function (event) {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     leaveOpening(performance.now(), true);
   });
-  window.addEventListener("hashchange", function () {
-    autoPending = false;
-    exitAt = null;
-    exitScrolled = false;
+  hero.addEventListener("wheel", function () { leaveOpening(performance.now(), false); }, { passive: true });
+  window.addEventListener("resize", function () {
+    if (root.classList.contains("mirror-opening-active")) resize();
   });
+  window.addEventListener("hashchange", function () { releaseOpening(false); });
   window.addEventListener("scroll", function () {
-    if (!openingIsVisible()) autoPending = false;
-    if (!raf && visible && inView && !reduce.matches) kick();
+    if (window.scrollY > 8) releaseOpening(false);
   }, { passive: true });
-  document.addEventListener("visibilitychange", function () {
-    visible = !document.hidden;
-    if (reduce.matches) scheduleReducedOpening();
-    else if (visible) kick();
-  });
-  if ("IntersectionObserver" in window) {
-    new IntersectionObserver(function (e) {
-      inView = e[0].isIntersecting;
-      if (reduce.matches) return;
-      if (inView) kick();
-    }, { threshold: 0 }).observe(frame);
-  }
+  document.addEventListener("visibilitychange", kick);
   reduce.addEventListener?.("change", function () {
-    if (reduce.matches) {
-      if (raf) cancelAnimationFrame(raf);
-      raf = 0;
-      if (exitAt !== null && !exitScrolled && openingIsVisible()) scrollIntoIntroduction(false);
-      exitAt = null;
-      exitScrolled = false;
-      burstOn = false;
-      gatherOn = false;
-      draw(performance.now());
-      scheduleReducedOpening();
-    } else {
-      clearTimeout(reducedTimer);
-      kick();
-    }
+    if (reduce.matches) releaseOpening(false);
   });
-
-  boot();
+  window.addEventListener("pageshow", function (event) {
+    if (event.persisted || window.scrollY > 8) releaseOpening(false);
+  });
 })();
