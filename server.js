@@ -60,6 +60,7 @@ const MARKET_OFFICIAL_PASSWORD = process.env.MARKET_OFFICIAL_PASSWORD || ''
 const MARKET_OFFICIAL_NAME = process.env.MARKET_OFFICIAL_NAME || '软工集市官方'
 
 const ORDERS_PATH = '/mirror-api/orders'
+const PROJECT_INQUIRY_SOURCE = 'project_inquiry'
 const ORDER_STATUSES = ['pending', 'accepted', 'in_progress', 'done', 'closed']
 const STATUS_LABELS = {
   pending: '待受理', accepted: '已受理', in_progress: '处理中', done: '已完成', closed: '已关闭',
@@ -252,6 +253,7 @@ function initDb() {
   ensureColumn('sessions', 'sso_sub', "sso_sub TEXT NOT NULL DEFAULT ''")
   ensureColumn('sessions', 'internal', 'internal INTEGER NOT NULL DEFAULT 0')
   ensureColumn('sessions', 'account_id', 'account_id INTEGER NOT NULL DEFAULT 0')
+  ensureColumn('orders', 'source', "source TEXT NOT NULL DEFAULT 'legacy'")
   ensureColumn('admins', 'sso_sub', "sso_sub TEXT NOT NULL DEFAULT ''")
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_admins_sub ON admins(sso_sub) WHERE sso_sub != ''")
 
@@ -955,6 +957,7 @@ async function handleCommunityApi(req, res, pathname, query) {
   if (pathname === '/api/healthz') {
     return reply(res, { ok: true, service: 'mirror', stack: 'node', db: 'ok' })
   }
+  if (pathname === '/api/project-inquiries') return submitProjectInquiry(req, res)
   // 前端诊断哨兵回传：落盘 + 打日志，便于排查白屏等渲染问题（不鉴权、限流）
   if (pathname === '/api/debug') {
     if (req.method !== 'POST') return fail(res, 405, 'method not allowed')
@@ -1200,6 +1203,47 @@ async function communityPost(req, res, pathname) {
 
 /* ---------------------------------------------------------------- 兼容 /mirror-api */
 
+async function submitProjectInquiry(req, res) {
+  if (req.method !== 'POST') return fail(res, 405, 'method not allowed')
+  if (String(req.headers['content-type'] || '').split(';')[0].trim().toLowerCase() !== 'application/json')
+    return fail(res, 415, '请使用项目咨询表单提交')
+  if (!allowRate('project-inquiry:' + clientIp(req), 12, 600))
+    return fail(res, 429, '提交过于频繁，请稍后再试')
+
+  const value = await readJson(req)
+  const title = cleanText(value.title, 60)
+  const description = cleanText(value.description, 3600)
+  const organization = cleanText(value.organization, 120)
+  const contactName = cleanText(value.contactName, 60)
+  const contactMethod = cleanText(value.contactMethod, 120)
+  if (!title || !description) return fail(res, 400, '请填写项目名称和需求说明')
+  if (!contactName || !contactMethod) return fail(res, 400, '请留下联系人和联系方式')
+  if (value.organization && !organization) return fail(res, 400, '请检查机构名称')
+  if (typeof value.requestKey !== 'string' || !/^[0-9a-f]{32}$/.test(value.requestKey))
+    return fail(res, 400, '提交凭据无效，请刷新后重试')
+
+  const orderId = 'q' + value.requestKey
+  const created = nowIso()
+  const content = organization ? `项目单位：${organization}\n\n${description}` : description
+  db.exec('BEGIN')
+  try {
+    const inserted = db.prepare(`INSERT INTO orders (
+        id, title, content, contact_name, contact_method, owner_email, owner_name, created, updated, source
+      ) VALUES (?, ?, ?, ?, ?, '', ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING`)
+      .run(orderId, title, content, contactName, contactMethod, contactName, created, created, PROJECT_INQUIRY_SOURCE)
+    if (inserted.changes) {
+      db.prepare(`INSERT INTO order_events (order_id, type, status, note, actor_email, actor_admin, created)
+                  VALUES (?, 'create', 'pending', ?, '', 0, ?)`)
+        .run(orderId, '官网项目咨询已提交', created)
+    }
+    db.exec('COMMIT')
+  } catch (error) {
+    db.exec('ROLLBACK')
+    throw error
+  }
+  return reply(res, { ok: true, orderId }, 201)
+}
+
 function orderJson(row, events) {
   const value = {
     id: row.id,
@@ -1219,6 +1263,7 @@ function orderJson(row, events) {
     createdAt: row.created,
     updatedAt: row.updated,
   }
+  if (row.source === PROJECT_INQUIRY_SOURCE) value.source = row.source
   if (events) value.events = events.map(event => ({
     type: event.type, status: event.status, note: event.note,
     actorEmail: event.actor_email, actorAdmin: !!event.actor_admin, createdAt: event.created,
@@ -1264,8 +1309,8 @@ async function handleLegacyApi(req, res, pathname, query) {
       const where = []
       const params = []
       if (!(admin && (query.get('scope') || 'all') === 'all')) {
-        where.push('owner_email = ?')
-        params.push(session.email)
+        where.push('owner_email = ? AND source != ?')
+        params.push(session.email, PROJECT_INQUIRY_SOURCE)
       }
       if (status && ORDER_STATUSES.includes(status)) {
         where.push('status = ?')
@@ -1282,7 +1327,8 @@ async function handleLegacyApi(req, res, pathname, query) {
       const row = db.prepare('SELECT * FROM orders WHERE id = ?').get(String(query.get('id') || ''))
       if (!row) return fail(res, 404, '订单不存在')
       const admin = isAdminSession(session)
-      if (!admin && row.owner_email !== session.email) return fail(res, 403, '无权查看')
+      if (!admin && (row.source === PROJECT_INQUIRY_SOURCE || row.owner_email !== session.email))
+        return fail(res, 403, '无权查看')
       return reply(res, { order: orderJson(row, orderEvents(row.id)), viewerIsAdmin: admin })
     }
     if (pathPart === '/market/chat-history') {
@@ -1418,6 +1464,7 @@ async function handleLegacyApi(req, res, pathname, query) {
     if (!isAdminSession(session)) return fail(res, 403, 'forbidden')
     const row = db.prepare('SELECT * FROM orders WHERE id = ?').get(String(value.id || ''))
     if (!row) return fail(res, 404, '订单不存在')
+    if (row.source === PROJECT_INQUIRY_SOURCE) return fail(res, 403, '官网项目咨询仅供内部跟进')
     if (row.market_post_id) return reply(res, { error: '该需求已转发过集市', postId: row.market_post_id }, 409)
     try {
       let token = session.market_token

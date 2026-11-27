@@ -1,6 +1,6 @@
-# 沕鉴·Mirror — 校园需求互助社区
+# 沕鉴·Mirror — 软件研发与交付
 
-品牌首页 + 需求社区。前端设计稿来自 `Mirror-静态站点-首页社区-20261121`，社区页已用 **Svelte 5 + Vite** 重写为高性能 SPA；后端用 **Node 22 标准库**（`node:http` + `node:sqlite`）重写，零第三方运行时依赖。
+沕鉴 Mirror 面向高校与企业承接软件项目。官网介绍研发服务和工程实践，并提供项目咨询入口。需求社区保留为独立应用，使用 Svelte 5 + Vite，服务端使用 Node 22 标准库。
 
 ```
 .
@@ -11,9 +11,10 @@
 ├── contracts/           # 金额 / 批注 / 统计 / 发布者展示规则（JSON 唯一真源）
 ├── mirror.db            # 运行时 SQLite（账号/会话/需求/报名/收藏/会话/消息/订单/批注/统计）
 ├── web/                 # 静态产物（直接托管，无需运行时构建）
-│   ├── index.html       # 品牌首页（碎镜视觉、服务流程与生态、技术底座介绍）
+│   ├── index.html       # 品牌首页（碎镜开屏、研发服务、工程实践与项目咨询）
 │   ├── landing-fx.css   # 首页样式与响应式布局
-│   ├── landing-fx.js    # 首页导航、当前位置与生态平台切换
+│   ├── landing-fx.js    # 首页导航与项目咨询表单
+│   ├── landing-mirror.js # 原始碎镜开屏动画
 │   ├── assets/          # 首页图片资源
 │   └── app/             # 社区 SPA 构建产物（Svelte）
 └── frontend/            # 社区 SPA 源码（Svelte 5 + Vite）
@@ -33,7 +34,12 @@
 
 - **后端 Node 22**：只用 `node:http`、`node:sqlite`、`node:crypto`、`fetch`。无 Express/无 ORM，单文件、单进程、同步 SQLite（WAL），启动即建表/迁移/种子。
 - **前端 Svelte 5**：编译期生成原生 DOM 操作 + 细粒度 runes 响应式，无虚拟 DOM diff。生产产物 JS ≈ 33KB gzip、CSS ≈ 5.5KB gzip。
-- **首页保持原生**：首屏使用静态镜面主视觉，正文和链接由 HTML 直接提供。少量原生 JavaScript 增强导航与生态平台切换。
+- **首页保持原生**：首屏使用原始碎镜 canvas 动画，正文和链接由 HTML 直接提供。
+
+## 官网项目咨询
+
+- 官网表单通过 `POST /api/project-inquiries` 将咨询写入订单库，来源为 `project_inquiry`。提交者无需登录。
+- 团队使用现有管理员会话，通过 `GET /mirror-api/orders/list?scope=all` 查看并跟进咨询。咨询不会出现在普通用户列表，也无法转发至集市。
 
 ## 快速启动
 

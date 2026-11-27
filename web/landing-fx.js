@@ -1,9 +1,10 @@
 function setupNavigation() {
-  const header = document.querySelector('.header-inner');
+  const header = document.querySelector('.site-header');
   const toggle = document.querySelector('#navToggle');
   const menu = document.querySelector('#navMenu');
-  const mobile = window.matchMedia('(max-width: 780px)');
-  const anchors = [...menu.querySelectorAll('.nav-sections a')];
+  const mobile = window.matchMedia('(max-width: 720px)');
+  const hero = document.querySelector('#hm-top');
+  const anchors = [...menu.querySelectorAll('a[href^="#"]')];
   const sections = anchors.map((anchor) => document.getElementById(anchor.hash.slice(1)));
 
   function setMenu(open) {
@@ -20,10 +21,12 @@ function setupNavigation() {
     if (!mobile.matches && focus === toggle) anchors[0].focus();
   }
 
-  function updateCurrentSection() {
-    const boundary = header.offsetHeight + Math.min(220, innerHeight * .24);
-    const bottomReached = scrollY + innerHeight >= document.documentElement.scrollHeight - 2;
-    const selected = bottomReached ? sections.at(-1) : sections.findLast(
+  function updateHeader() {
+    const height = header.offsetHeight;
+    header.classList.toggle('is-light', hero.getBoundingClientRect().bottom <= height + 1);
+    const boundary = height + Math.min(185, innerHeight * .2);
+    const atBottom = scrollY + innerHeight >= document.documentElement.scrollHeight - 2;
+    const selected = atBottom ? sections.at(-1) : sections.findLast(
       (section) => section.getBoundingClientRect().top <= boundary
     );
     anchors.forEach((anchor, index) => {
@@ -37,7 +40,7 @@ function setupNavigation() {
     if (frame) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
-      updateCurrentSection();
+      updateHeader();
     });
   }
 
@@ -46,7 +49,7 @@ function setupNavigation() {
   mobile.addEventListener('change', syncMenu);
   toggle.addEventListener('click', () => setMenu(menu.hidden));
   menu.addEventListener('click', (event) => {
-    const link = event.target.closest('.nav-sections a');
+    const link = event.target.closest('a[href^="#"]');
     if (!mobile.matches || !link) return;
     setMenu(false);
     document.getElementById(link.hash.slice(1)).focus({ preventScroll: true });
@@ -59,59 +62,59 @@ function setupNavigation() {
   window.addEventListener('scroll', scheduleUpdate, { passive: true });
   window.addEventListener('resize', scheduleUpdate);
   window.addEventListener('pageshow', scheduleUpdate);
-  new ResizeObserver(scheduleUpdate).observe(document.querySelector('main'));
-  updateCurrentSection();
+  if ('ResizeObserver' in window) new ResizeObserver(scheduleUpdate).observe(hero);
+  updateHeader();
 }
 
-function setupShowcase() {
-  const showcase = document.querySelector('#ecosystemShowcase');
-  const list = showcase.querySelector('[role="tablist"]');
-  const tabs = [...list.querySelectorAll('[role="tab"]')];
-  const panels = tabs.map((tab) => document.getElementById(tab.getAttribute('aria-controls')));
+function setupInquiry() {
+  const form = document.querySelector('#inquiryForm');
+  const button = form.querySelector('button[type="submit"]');
+  const status = document.querySelector('#inquiryStatus');
+  let previousData = '';
+  let requestKey = '';
 
-  const horizontal = window.matchMedia('(max-width: 780px)');
-
-  function syncOrientation() {
-    list.setAttribute('aria-orientation', horizontal.matches ? 'horizontal' : 'vertical');
+  function setStatus(message, state) {
+    status.dataset.state = state;
+    status.textContent = message;
   }
 
-  function activate(selected) {
-    tabs.forEach((tab, index) => {
-      const active = index === selected;
-      tab.setAttribute('aria-selected', String(active));
-      tab.tabIndex = active ? 0 : -1;
-      panels[index].hidden = !active;
-    });
-  }
-
-  panels.forEach((panel, index) => {
-    panel.setAttribute('role', 'tabpanel');
-    panel.tabIndex = 0;
-    panel.setAttribute('aria-labelledby', tabs[index].id);
-  });
-  tabs.forEach((tab, index) => tab.addEventListener('click', () => activate(index)));
-  list.addEventListener('keydown', (event) => {
-    const current = tabs.indexOf(event.target);
-    if (current < 0) return;
-    const last = tabs.length - 1;
-    const next = {
-      [horizontal.matches ? 'ArrowLeft' : 'ArrowUp']: (current + last) % tabs.length,
-      [horizontal.matches ? 'ArrowRight' : 'ArrowDown']: (current + 1) % tabs.length,
-      Home: 0,
-      End: last,
-    }[event.key];
-    if (next === undefined) return;
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    activate(next);
-    tabs[next].focus();
+    if (button.disabled) return;
+    const data = Object.fromEntries(new FormData(form));
+    const snapshot = JSON.stringify(data);
+    if (snapshot !== previousData) {
+      requestKey = Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) => byte.toString(16).padStart(2, '0')).join('');
+      previousData = snapshot;
+    }
+
+    button.disabled = true;
+    setStatus('正在提交…', 'pending');
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, requestKey }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        const message = response.status < 500 ? result.error : '';
+        setStatus(message || '暂时无法提交，请稍后重试。', 'error');
+        return;
+      }
+
+      form.reset();
+      previousData = '';
+      setStatus('项目需求已提交，沕鉴团队将通过你留下的联系方式对接。', 'ok');
+    } catch {
+      setStatus('连接中断，请重试。重复提交同一份需求只会登记一次。', 'error');
+    } finally {
+      button.disabled = false;
+    }
   });
 
-  syncOrientation();
-  horizontal.addEventListener('change', syncOrientation);
-  activate(0);
-  showcase.classList.add('is-enhanced');
-  list.hidden = false;
+  button.hidden = false;
 }
 
 setupNavigation();
-setupShowcase();
+setupInquiry();
